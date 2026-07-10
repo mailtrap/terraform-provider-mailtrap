@@ -1,0 +1,21 @@
+# Compiled provider binary
+/terraform-provider-mailtrap
+dist/
+
+# Go test/build artifacts
+*.test
+*.out
+
+# Local workspace / dependency overrides (never committed)
+go.work
+go.work.sum
+
+# Terraform working files
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Editors
+.idea/
+.vscode/
