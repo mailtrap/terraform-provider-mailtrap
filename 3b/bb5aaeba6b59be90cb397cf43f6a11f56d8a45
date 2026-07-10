@@ -1,0 +1,19 @@
+internal/provider/provider.go
+  s_1f95e09e2ffd7f::t_74d62574eb8294 69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "3bbb5aaeba6b59be90cb397cf43f6a11f56d8a45",
+  "prompts": {},
+  "sessions": {
+    "s_1f95e09e2ffd7f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b1e7b992-dfbd-4a0b-8c8e-da39873df54d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Lorenc326 <iLorenc326@gmail.com>"
+    }
+  }
+}
