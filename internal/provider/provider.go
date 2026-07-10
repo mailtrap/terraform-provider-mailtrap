@@ -94,8 +94,9 @@ func (p *mailtrapProvider) Configure(ctx context.Context, req provider.Configure
 }
 
 func (p *mailtrapProvider) Resources(_ context.Context) []func() resource.Resource {
-	// No resources yet.
-	return nil
+	return []func() resource.Resource{
+		NewSendingDomainResource,
+	}
 }
 
 func (p *mailtrapProvider) DataSources(_ context.Context) []func() datasource.DataSource {
