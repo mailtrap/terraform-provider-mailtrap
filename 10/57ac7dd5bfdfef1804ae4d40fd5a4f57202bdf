@@ -1,0 +1,24 @@
+LICENSE
+  s_1f95e09e2ffd7f::t_d6aa3f22143cee 1-21
+CODE_OF_CONDUCT.md
+  s_1f95e09e2ffd7f::t_9b764df84ceae4 1-81
+README.md
+  s_1f95e09e2ffd7f::t_ed3de84a282aa8 1-25,27-56
+  s_1f95e09e2ffd7f::t_59c87aca933672 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "1057ac7dd5bfdfef1804ae4d40fd5a4f57202bdf",
+  "prompts": {},
+  "sessions": {
+    "s_1f95e09e2ffd7f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b1e7b992-dfbd-4a0b-8c8e-da39873df54d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Lorenc326 <iLorenc326@gmail.com>"
+    }
+  }
+}
