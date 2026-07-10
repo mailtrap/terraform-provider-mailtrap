@@ -1,0 +1,32 @@
+go.mod
+  s_1f95e09e2ffd7f::t_6616679b965603 1-2,4-8,10,33
+  s_1f95e09e2ffd7f::t_14b9c07e7a79e9 3
+  s_1f95e09e2ffd7f::t_5a74066edc7834 9,11-32
+main.go
+  s_1f95e09e2ffd7f::t_4ff2f26d672262 1-28
+.gitignore
+  s_1f95e09e2ffd7f::t_6b89140893a1db 1-21
+.tool-versions
+  s_1f95e09e2ffd7f::t_39866eca0d4f8f 1-2
+internal/provider/provider.go
+  s_1f95e09e2ffd7f::t_43e204381707fe 97-98
+  s_1f95e09e2ffd7f::t_57319eae80f0b2 1-96,99-103
+go.sum
+  s_1f95e09e2ffd7f::t_7d36a2a62bcc05 1-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "0f542a436c8576be0ef909ae6ad6cb440b377efc",
+  "prompts": {},
+  "sessions": {
+    "s_1f95e09e2ffd7f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b1e7b992-dfbd-4a0b-8c8e-da39873df54d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Lorenc326 <iLorenc326@gmail.com>"
+    }
+  }
+}
