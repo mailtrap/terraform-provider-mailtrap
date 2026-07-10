@@ -66,7 +66,7 @@ func (p *mailtrapProvider) Configure(ctx context.Context, req provider.Configure
 	}
 
 	token := os.Getenv(envAPIToken)
-	if !cfg.APIToken.IsNull() {
+	if !cfg.APIToken.IsNull() && cfg.APIToken.ValueString() != "" {
 		token = cfg.APIToken.ValueString()
 	}
 	if token == "" {
