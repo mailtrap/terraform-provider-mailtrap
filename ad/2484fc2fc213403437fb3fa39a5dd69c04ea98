@@ -1,0 +1,21 @@
+.github/workflows/ci.yml
+  s_1f95e09e2ffd7f::t_1948f0de070f38 1-36
+.golangci.yml
+  s_1f95e09e2ffd7f::t_f0d03e8a932fbc 1-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "ad2484fc2fc213403437fb3fa39a5dd69c04ea98",
+  "prompts": {},
+  "sessions": {
+    "s_1f95e09e2ffd7f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b1e7b992-dfbd-4a0b-8c8e-da39873df54d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Lorenc326 <iLorenc326@gmail.com>"
+    }
+  }
+}
