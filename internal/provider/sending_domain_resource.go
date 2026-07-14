@@ -152,24 +152,35 @@ func (r *sendingDomainResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
+	// Build the follow-up payload from the plan before flattenSendingDomain
+	// overwrites the configured values with the create response.
+	upd := trackingUpdate(plan)
+
 	domain, _, err := r.client.SendingDomains.Create(ctx, plan.DomainName.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating sending domain", err.Error())
 		return
 	}
 
+	// Persist the created domain right away so a failure in the follow-up
+	// update below doesn't leave it orphaned outside of state.
+	resp.Diagnostics.Append(flattenSendingDomain(ctx, domain, &plan)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Create only accepts the domain name; apply any configured tracking
 	// options with a follow-up update.
-	if upd := trackingUpdate(plan); upd != nil {
+	if upd != nil {
 		domain, _, err = r.client.SendingDomains.Update(ctx, domain.ID, upd)
 		if err != nil {
 			resp.Diagnostics.AddError("Error setting sending domain tracking options", err.Error())
 			return
 		}
+		resp.Diagnostics.Append(flattenSendingDomain(ctx, domain, &plan)...)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	}
-
-	resp.Diagnostics.Append(flattenSendingDomain(ctx, domain, &plan)...)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *sendingDomainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -194,18 +205,26 @@ func (r *sendingDomainResource) Read(ctx context.Context, req resource.ReadReque
 }
 
 func (r *sendingDomainResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state sendingDomainModel
+	var plan sendingDomainModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	upd := trackingUpdate(plan)
-	if upd == nil {
-		upd = &mailtrap.UpdateDomainRequest{}
+	// id is Computed with UseStateForUnknown, so the plan always carries the
+	// known state value here.
+	id := plan.ID.ValueInt64()
+
+	var (
+		domain *mailtrap.SendingDomain
+		err    error
+	)
+	if upd := trackingUpdate(plan); upd != nil {
+		domain, _, err = r.client.SendingDomains.Update(ctx, id, upd)
+	} else {
+		// Nothing to send; refresh instead of issuing an empty PATCH.
+		domain, _, err = r.client.SendingDomains.Get(ctx, id)
 	}
-	domain, _, err := r.client.SendingDomains.Update(ctx, state.ID.ValueInt64(), upd)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating sending domain", err.Error())
 		return
@@ -237,20 +256,23 @@ func (r *sendingDomainResource) ImportState(ctx context.Context, req resource.Im
 }
 
 // trackingUpdate builds an update payload from the tracking options set in the
-// plan, or returns nil when none are configured.
+// plan, or returns nil when none are configured, in which case callers skip
+// the API call. Unknown values are excluded: on create, unconfigured
+// Optional+Computed attributes are unknown (not null), and sending them would
+// force the server-side defaults to false.
 func trackingUpdate(m sendingDomainModel) *mailtrap.UpdateDomainRequest {
-	if m.OpenTrackingEnabled.IsNull() && m.ClickTrackingEnabled.IsNull() && m.AutoUnsubscribeLinkEnabled.IsNull() {
-		return nil
-	}
 	upd := &mailtrap.UpdateDomainRequest{}
-	if !m.OpenTrackingEnabled.IsNull() {
-		upd.OpenTrackingEnabled = mailtrap.Ptr(m.OpenTrackingEnabled.ValueBool())
+	if v := m.OpenTrackingEnabled; !v.IsNull() && !v.IsUnknown() {
+		upd.OpenTrackingEnabled = v.ValueBoolPointer()
 	}
-	if !m.ClickTrackingEnabled.IsNull() {
-		upd.ClickTrackingEnabled = mailtrap.Ptr(m.ClickTrackingEnabled.ValueBool())
+	if v := m.ClickTrackingEnabled; !v.IsNull() && !v.IsUnknown() {
+		upd.ClickTrackingEnabled = v.ValueBoolPointer()
 	}
-	if !m.AutoUnsubscribeLinkEnabled.IsNull() {
-		upd.AutoUnsubscribeLinkEnabled = mailtrap.Ptr(m.AutoUnsubscribeLinkEnabled.ValueBool())
+	if v := m.AutoUnsubscribeLinkEnabled; !v.IsNull() && !v.IsUnknown() {
+		upd.AutoUnsubscribeLinkEnabled = v.ValueBoolPointer()
+	}
+	if *upd == (mailtrap.UpdateDomainRequest{}) {
+		return nil
 	}
 	return upd
 }

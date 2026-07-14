@@ -16,7 +16,7 @@ func TestAccSendingDomainResource(t *testing.T) {
 	srv := newDomainsMockServer()
 	t.Cleanup(srv.Close)
 
-	resource.Test(t, resource.TestCase{
+	resource.UnitTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{ // create + follow-up tracking update
@@ -28,6 +28,7 @@ resource "mailtrap_sending_domain" "test" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "domain_name", "example.com"),
 					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "open_tracking_enabled", "true"),
+					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "click_tracking_enabled", "true"),
 					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "compliance_status", "pending"),
 					resource.TestCheckResourceAttrSet("mailtrap_sending_domain.test", "id"),
 					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "dns_records.#", "1"),
@@ -77,7 +78,7 @@ func newDomainsMockServer() *httptest.Server {
 			"compliance_status":             "pending",
 			"dns_verified":                  false,
 			"open_tracking_enabled":         false,
-			"click_tracking_enabled":        false,
+			"click_tracking_enabled":        true,
 			"auto_unsubscribe_link_enabled": false,
 			"dns_records": []any{map[string]any{
 				"key": "dkim", "domain": name, "name": "dkim._domainkey",
