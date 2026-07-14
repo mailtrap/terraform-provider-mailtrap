@@ -112,8 +112,8 @@ github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3x
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/mailtrap/mailtrap-go v0.1.0 h1:Sdn5dox0uTPw/MmXbKQ5BilrzHBxQGGNybiivYe3YPY=
-github.com/mailtrap/mailtrap-go v0.1.0/go.mod h1:arzHOUFfbka7ULyNbyi7zRiFVvuMCDfO6BJ0XPNJpHo=
+github.com/mailtrap/mailtrap-go v0.2.0 h1:Y50PpHIerZOmHPycVPtsdkVwbDtwTzthq9axehPgyxY=
+github.com/mailtrap/mailtrap-go v0.2.0/go.mod h1:arzHOUFfbka7ULyNbyi7zRiFVvuMCDfO6BJ0XPNJpHo=
 github.com/mattn/go-colorable v0.1.9/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
 github.com/mattn/go-colorable v0.1.12/go.mod h1:u5H1YNBxpqRaxsYJYSkiCWKzEfiAb1Gb520KVy5xxl4=
 github.com/mattn/go-colorable v0.1.14 h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHPsaIE=

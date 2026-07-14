@@ -6,7 +6,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
 	github.com/hashicorp/terraform-plugin-testing v1.16.0
-	github.com/mailtrap/mailtrap-go v0.1.0
+	github.com/mailtrap/mailtrap-go v0.2.0
 )
 
 require (
