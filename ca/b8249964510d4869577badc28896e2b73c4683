@@ -1,0 +1,28 @@
+internal/provider/errors.go
+  s_3c2d4af476737f::t_1140d648e6b35a 12-13
+go.mod
+  s_3c2d4af476737f::t_bc65929b8da22e 9
+go.sum
+  s_3c2d4af476737f::t_bf0ab830fb84c5 115-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "cab8249964510d4869577badc28896e2b73c4683",
+  "prompts": {},
+  "humans": {
+    "h_c750c91773bbc1": {
+      "author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  },
+  "sessions": {
+    "s_3c2d4af476737f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "192fa223-9bd5-4536-a416-95e055844bd2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
