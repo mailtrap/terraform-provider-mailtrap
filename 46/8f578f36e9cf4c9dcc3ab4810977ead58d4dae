@@ -1,0 +1,45 @@
+internal/provider/project_resource_test.go
+  s_5f458bc6397ce4::t_6d9aa4cd447630 1-126
+internal/provider/sandbox_resource.go
+  s_5f458bc6397ce4::t_937a226b9ce36f 174-177,181-188,194,196,202-203
+  s_5f458bc6397ce4::t_e12785f1d83037 1-173,178-180,189-193,195,197-201,204-301
+internal/provider/project_resource.go
+  s_5f458bc6397ce4::t_f89a8daf2c6e35 167
+  s_5f458bc6397ce4::t_ac8a1d5be7b8b5 103,124,142
+  s_5f458bc6397ce4::t_ba87e9247365b9 1-102,104-123,125-141,143-166,168-183
+internal/provider/email_template_resource_test.go
+  s_5f458bc6397ce4::t_1aee10d09be5cf 1-136
+go.mod
+  s_5f458bc6397ce4::t_b5546776a73151 7
+internal/provider/email_template_resource.go
+  s_5f458bc6397ce4::t_811c65ed7277ad 8
+  s_5f458bc6397ce4::t_e5990c98c49d07 1-7,9-14,16-82,84-89,91-231
+  s_5f458bc6397ce4::t_e9437d711bea40 15
+  s_5f458bc6397ce4::t_356bce5c34969a 83,90
+internal/provider/sandbox_resource_test.go
+  s_5f458bc6397ce4::t_0a70d34c0e8146 1-149
+internal/provider/webhook_resource.go
+  s_5f458bc6397ce4::t_23406192b5fa44 1-319
+internal/provider/webhook_resource_test.go
+  s_5f458bc6397ce4::t_0e6443d26809ee 1-155
+go.sum
+  s_5f458bc6397ce4::t_de7c0a42e62b57 89-90
+internal/provider/provider.go
+  s_5f458bc6397ce4::t_475cd8278d4d25 98-100,102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "468f578f36e9cf4c9dcc3ab4810977ead58d4dae",
+  "prompts": {},
+  "sessions": {
+    "s_5f458bc6397ce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8a22a7a-0850-4f1d-8795-7574853d141f",
+        "model": "claude-fable-5"
+      },
+      "human_author": null
+    }
+  }
+}
