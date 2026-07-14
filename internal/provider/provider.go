@@ -95,7 +95,11 @@ func (p *mailtrapProvider) Configure(ctx context.Context, req provider.Configure
 
 func (p *mailtrapProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		NewEmailTemplateResource,
+		NewProjectResource,
+		NewSandboxResource,
 		NewSendingDomainResource,
+		NewWebhookResource,
 	}
 }
 
