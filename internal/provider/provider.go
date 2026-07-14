@@ -107,5 +107,10 @@ func (p *mailtrapProvider) Resources(_ context.Context) []func() resource.Resour
 }
 
 func (p *mailtrapProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		NewAccountDataSource,
+		NewProjectDataSource,
+		NewSandboxDataSource,
+		NewSendingDomainDataSource,
+	}
 }

@@ -104,6 +104,16 @@ func newSandboxesMockServer() *httptest.Server {
 		writeJSON(w, s)
 	})
 
+	mux.HandleFunc("GET /api/sandboxes", func(w http.ResponseWriter, _ *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+		all := make([]any, 0, len(sandboxes))
+		for _, s := range sandboxes {
+			all = append(all, s)
+		}
+		writeJSON(w, all)
+	})
+
 	mux.HandleFunc("GET /api/sandboxes/{id}", func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		defer mu.Unlock()
