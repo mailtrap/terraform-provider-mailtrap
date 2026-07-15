@@ -47,6 +47,16 @@ TF_ACC=1 go test ./...
 
 To exercise the provider locally without publishing, use a [development override](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers) that points `mailtrap/mailtrap` at your `go install` output.
 
+### Documentation
+
+The `docs/` directory is generated — do not edit it by hand. Pages are rendered by [tfplugindocs](https://github.com/hashicorp/terraform-plugin-docs) from the provider schema (attribute descriptions in the Go source) and the configuration examples under `examples/`. After changing either, regenerate and commit the result:
+
+```bash
+go generate ./...
+```
+
+CI fails if `docs/` is out of date.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).

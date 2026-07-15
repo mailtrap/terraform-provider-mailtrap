@@ -10,6 +10,8 @@ import (
 	"github.com/mailtrap/terraform-provider-mailtrap/internal/provider"
 )
 
+//go:generate go tool tfplugindocs generate --provider-name mailtrap
+
 // version is overridden at release time via -ldflags; "dev" for local builds.
 var version = "dev"
 
