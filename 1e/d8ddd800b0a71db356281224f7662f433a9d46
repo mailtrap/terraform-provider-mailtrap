@@ -1,0 +1,93 @@
+docs/resources/sandbox.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-69
+examples/data-sources/mailtrap_project/data-source.tf
+  s_5f458bc6397ce4::t_af4c3b9bbfcae5 1-9
+.github/workflows/ci.yml
+  s_5f458bc6397ce4::t_71b371820f168f 37-49
+examples/resources/mailtrap_email_template/import.sh
+  s_5f458bc6397ce4::t_6fb72a1de22c9a 1-2
+examples/resources/mailtrap_contact_list/import.sh
+  s_5f458bc6397ce4::t_3aa53b7accdbd3 1-2
+examples/resources/mailtrap_webhook/resource.tf
+  s_5f458bc6397ce4::t_fd07c42ef6126e 1-12
+go.mod
+  s_5f458bc6397ce4::t_e4222b6bd9b9c5 14-18,22-24,29-30,45-46,52-53,56,63-65,69-70,72,74,85-86,88-89
+examples/resources/mailtrap_sending_domain/import.sh
+  s_5f458bc6397ce4::t_9d8b1827c5d825 1-2
+examples/resources/mailtrap_email_template/resource.tf
+  s_5f458bc6397ce4::t_1281f498494ffb 1-7
+docs/resources/project.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-50
+docs/data-sources/project.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-45
+docs/resources/sending_domain.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-70
+docs/data-sources/sandbox.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-50
+examples/data-sources/mailtrap_account/data-source.tf
+  s_5f458bc6397ce4::t_582ad7df19f7a1 1-7
+main.go
+  s_5f458bc6397ce4::t_d2d4938b0438b4 13-16
+docs/data-sources/account.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-35
+examples/resources/mailtrap_sending_domain/resource.tf
+  s_5f458bc6397ce4::t_59b60377024c23 1-10
+examples/resources/mailtrap_webhook/import.sh
+  s_5f458bc6397ce4::t_40ea015c273dd6 1-3
+examples/data-sources/mailtrap_sandbox/data-source.tf
+  s_5f458bc6397ce4::t_404d77c3788625 1-9
+examples/resources/mailtrap_api_token/import.sh
+  s_5f458bc6397ce4::t_0376fa851128db 1-3
+examples/data-sources/mailtrap_sending_domain/data-source.tf
+  s_5f458bc6397ce4::t_0ecb4ab45192c8 1-8
+docs/resources/webhook.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-62
+docs/index.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-36
+examples/resources/mailtrap_contact_field/resource.tf
+  s_5f458bc6397ce4::t_fc71a4b2a352a4 1-5
+examples/resources/mailtrap_project/resource.tf
+  s_5f458bc6397ce4::t_e3207e9d07b894 1-3
+examples/resources/mailtrap_sandbox/import.sh
+  s_5f458bc6397ce4::t_170c61fc6079b7 1-2
+docs/resources/email_template.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-55
+examples/resources/mailtrap_project/import.sh
+  s_5f458bc6397ce4::t_f413889b5df2f1 1-2
+examples/resources/mailtrap_sandbox/resource.tf
+  s_5f458bc6397ce4::t_0de0bda0738f32 1-14
+docs/resources/contact_list.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-41
+examples/resources/mailtrap_contact_field/import.sh
+  s_5f458bc6397ce4::t_de8941498677fe 1-2
+docs/resources/api_token.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-74
+docs/resources/contact_field.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-45
+examples/provider/provider.tf
+  s_5f458bc6397ce4::t_9488ba105135c6 1-13
+examples/resources/mailtrap_contact_list/resource.tf
+  s_5f458bc6397ce4::t_194b8a7808aef8 1-3
+docs/data-sources/sending_domain.md
+  s_5f458bc6397ce4::t_4302e1feef703b 1-54
+examples/resources/mailtrap_api_token/resource.tf
+  s_5f458bc6397ce4::t_56abcfdf295961 1-18
+go.sum
+  s_5f458bc6397ce4::t_70fd000b0ca6f7 3-12,22-27,45-46,70,73-74,87,107-110,129-133,145-146,157-159,168,178-179,184-186,189-191,193-195,209-212,217-218,233,236-237,245,263,269,274,303-305
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "1ed8ddd800b0a71db356281224f7662f433a9d46",
+  "prompts": {},
+  "sessions": {
+    "s_5f458bc6397ce4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8a22a7a-0850-4f1d-8795-7574853d141f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
