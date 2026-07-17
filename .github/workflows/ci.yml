@@ -34,3 +34,16 @@ jobs:
         run: go vet ./...
       - name: Test
         run: go test -race ./...
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Generate docs
+        run: go generate ./...
+      - name: Fail if docs are out of date
+        run: git diff --exit-code -- docs/ || (echo "docs/ is out of date; run 'go generate ./...' and commit the result" && exit 1)

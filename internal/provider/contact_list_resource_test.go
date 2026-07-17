@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -18,10 +19,11 @@ func TestAccContactListResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_contact_list" "test" {
-  name = "Newsletter"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_contact_list" "test" {
+					  name = "Newsletter"
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_contact_list.test", "name", "Newsletter"),
 					resource.TestCheckResourceAttrSet("mailtrap_contact_list.test", "id"),
@@ -33,10 +35,11 @@ resource "mailtrap_contact_list" "test" {
 				ImportStateVerify: true,
 			},
 			{ // rename in place
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_contact_list" "test" {
-  name = "Weekly Newsletter"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_contact_list" "test" {
+					  name = "Weekly Newsletter"
+					}
+				`),
 				Check: resource.TestCheckResourceAttr("mailtrap_contact_list.test", "name", "Weekly Newsletter"),
 			},
 		},

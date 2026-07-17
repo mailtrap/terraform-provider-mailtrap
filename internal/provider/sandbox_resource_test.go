@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -18,12 +19,13 @@ func TestAccSandboxResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{ // create + follow-up email_username update
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_sandbox" "test" {
-  project_id     = 1
-  name           = "Staging"
-  email_username = "staging-mail"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_sandbox" "test" {
+					  project_id     = 1
+					  name           = "Staging"
+					  email_username = "staging-mail"
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_sandbox.test", "name", "Staging"),
 					resource.TestCheckResourceAttr("mailtrap_sandbox.test", "project_id", "1"),
@@ -40,12 +42,13 @@ resource "mailtrap_sandbox" "test" {
 				ImportStateVerify: true,
 			},
 			{ // rename in place
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_sandbox" "test" {
-  project_id     = 1
-  name           = "Staging 2"
-  email_username = "staging-mail"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_sandbox" "test" {
+					  project_id     = 1
+					  name           = "Staging 2"
+					  email_username = "staging-mail"
+					}
+				`),
 				Check: resource.TestCheckResourceAttr("mailtrap_sandbox.test", "name", "Staging 2"),
 			},
 		},

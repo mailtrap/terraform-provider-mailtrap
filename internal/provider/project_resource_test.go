@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -18,10 +19,11 @@ func TestAccProjectResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_project" "test" {
-  name = "My Project"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_project" "test" {
+					  name = "My Project"
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_project.test", "name", "My Project"),
 					resource.TestCheckResourceAttrSet("mailtrap_project.test", "id"),
@@ -34,10 +36,11 @@ resource "mailtrap_project" "test" {
 				ImportStateVerify: true,
 			},
 			{ // rename in place
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_project" "test" {
-  name = "Renamed Project"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_project" "test" {
+					  name = "Renamed Project"
+					}
+				`),
 				Check: resource.TestCheckResourceAttr("mailtrap_project.test", "name", "Renamed Project"),
 			},
 		},
