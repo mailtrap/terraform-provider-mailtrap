@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -18,15 +19,16 @@ func TestAccAPITokenResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_api_token" "test" {
-  name = "ci-token"
-  resources = [{
-    resource_type = "account"
-    resource_id   = 1
-    access_level  = 100
-  }]
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_api_token" "test" {
+					  name = "ci-token"
+					  resources = [{
+					    resource_type = "account"
+					    resource_id   = 1
+					    access_level  = 100
+					  }]
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "name", "ci-token"),
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "resources.#", "1"),
@@ -45,15 +47,16 @@ resource "mailtrap_api_token" "test" {
 				ImportStateVerifyIgnore: []string{"token"},
 			},
 			{ // renaming forces replacement (no update endpoint); a new token is issued
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_api_token" "test" {
-  name = "ci-token-v2"
-  resources = [{
-    resource_type = "account"
-    resource_id   = 1
-    access_level  = 100
-  }]
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_api_token" "test" {
+					  name = "ci-token-v2"
+					  resources = [{
+					    resource_type = "account"
+					    resource_id   = 1
+					    access_level  = 100
+					  }]
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "name", "ci-token-v2"),
 					resource.TestCheckResourceAttrSet("mailtrap_api_token.test", "token"),

@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -18,26 +19,29 @@ func TestAccAccountDataSource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{ // lookup by name
-				Config: testProviderConfig(srv.URL) + `
-data "mailtrap_account" "test" {
-  name = "Acme"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					data "mailtrap_account" "test" {
+					  name = "Acme"
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.mailtrap_account.test", "id", "101"),
 					resource.TestCheckResourceAttr("data.mailtrap_account.test", "access_levels.#", "1"),
 				),
 			},
 			{ // no filters with multiple accessible accounts is ambiguous
-				Config: testProviderConfig(srv.URL) + `
-data "mailtrap_account" "test" {
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					data "mailtrap_account" "test" {
+					}
+				`),
 				ExpectError: regexp.MustCompile(`Multiple accounts match`),
 			},
 			{ // lookup by id
-				Config: testProviderConfig(srv.URL) + `
-data "mailtrap_account" "test" {
-  id = 102
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					data "mailtrap_account" "test" {
+					  id = 102
+					}
+				`),
 				Check: resource.TestCheckResourceAttr("data.mailtrap_account.test", "name", "Beta Corp"),
 			},
 		},

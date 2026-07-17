@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -18,12 +19,13 @@ func TestAccContactFieldResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_contact_field" "test" {
-  name      = "Plan"
-  data_type = "text"
-  merge_tag = "plan"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_contact_field" "test" {
+					  name      = "Plan"
+					  data_type = "text"
+					  merge_tag = "plan"
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_contact_field.test", "name", "Plan"),
 					resource.TestCheckResourceAttr("mailtrap_contact_field.test", "data_type", "text"),
@@ -37,12 +39,13 @@ resource "mailtrap_contact_field" "test" {
 				ImportStateVerify: true,
 			},
 			{ // rename and change merge tag in place; data_type unchanged
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_contact_field" "test" {
-  name      = "Subscription Plan"
-  data_type = "text"
-  merge_tag = "subscription_plan"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_contact_field" "test" {
+					  name      = "Subscription Plan"
+					  data_type = "text"
+					  merge_tag = "subscription_plan"
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_contact_field.test", "name", "Subscription Plan"),
 					resource.TestCheckResourceAttr("mailtrap_contact_field.test", "merge_tag", "subscription_plan"),

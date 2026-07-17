@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -18,12 +19,13 @@ func TestAccWebhookResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_webhook" "test" {
-  url          = "https://example.com/hook"
-  webhook_type = "email_sending"
-  event_types  = ["delivery", "bounce"]
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_webhook" "test" {
+					  url          = "https://example.com/hook"
+					  webhook_type = "email_sending"
+					  event_types  = ["delivery", "bounce"]
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_webhook.test", "url", "https://example.com/hook"),
 					resource.TestCheckResourceAttr("mailtrap_webhook.test", "webhook_type", "email_sending"),
@@ -43,13 +45,14 @@ resource "mailtrap_webhook" "test" {
 				ImportStateVerifyIgnore: []string{"signing_secret"},
 			},
 			{ // change url and deactivate in place; signing_secret must survive
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_webhook" "test" {
-  url          = "https://example.com/hook2"
-  webhook_type = "email_sending"
-  active       = false
-  event_types  = ["delivery", "bounce"]
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_webhook" "test" {
+					  url          = "https://example.com/hook2"
+					  webhook_type = "email_sending"
+					  active       = false
+					  event_types  = ["delivery", "bounce"]
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_webhook.test", "url", "https://example.com/hook2"),
 					resource.TestCheckResourceAttr("mailtrap_webhook.test", "active", "false"),

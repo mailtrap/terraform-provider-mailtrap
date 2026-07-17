@@ -2,13 +2,13 @@ package provider
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"sync"
 	"testing"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -20,11 +20,12 @@ func TestAccSendingDomainResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{ // create + follow-up tracking update
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_sending_domain" "test" {
-  domain_name           = "example.com"
-  open_tracking_enabled = true
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_sending_domain" "test" {
+					  domain_name           = "example.com"
+					  open_tracking_enabled = true
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "domain_name", "example.com"),
 					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "open_tracking_enabled", "true"),
@@ -40,11 +41,12 @@ resource "mailtrap_sending_domain" "test" {
 				ImportStateVerify: true,
 			},
 			{ // update the tracking flag in place
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_sending_domain" "test" {
-  domain_name           = "example.com"
-  open_tracking_enabled = false
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_sending_domain" "test" {
+					  domain_name           = "example.com"
+					  open_tracking_enabled = false
+					}
+				`),
 				Check: resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "open_tracking_enabled", "false"),
 			},
 		},
@@ -52,12 +54,12 @@ resource "mailtrap_sending_domain" "test" {
 }
 
 func testProviderConfig(baseURL string) string {
-	return fmt.Sprintf(`
-provider "mailtrap" {
-  api_token = "test-token"
-  base_url  = %q
-}
-`, baseURL)
+	return heredoc.Docf(`
+		provider "mailtrap" {
+		  api_token = "test-token"
+		  base_url  = %q
+		}
+	`, baseURL)
 }
 
 // newDomainsMockServer is a minimal in-memory stand-in for the Mailtrap

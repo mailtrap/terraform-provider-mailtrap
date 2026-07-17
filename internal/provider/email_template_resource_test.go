@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -18,13 +19,14 @@ func TestAccEmailTemplateResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_email_template" "test" {
-  name      = "Welcome"
-  category  = "Onboarding"
-  subject   = "Welcome aboard!"
-  body_html = "<h1>Hello</h1>"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_email_template" "test" {
+					  name      = "Welcome"
+					  category  = "Onboarding"
+					  subject   = "Welcome aboard!"
+					  body_html = "<h1>Hello</h1>"
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_email_template.test", "name", "Welcome"),
 					resource.TestCheckResourceAttr("mailtrap_email_template.test", "category", "Onboarding"),
@@ -41,14 +43,15 @@ resource "mailtrap_email_template" "test" {
 				ImportStateVerify: true,
 			},
 			{ // update subject and add a text body in place
-				Config: testProviderConfig(srv.URL) + `
-resource "mailtrap_email_template" "test" {
-  name      = "Welcome"
-  category  = "Onboarding"
-  subject   = "Welcome!"
-  body_text = "Hello"
-  body_html = "<h1>Hello</h1>"
-}`,
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_email_template" "test" {
+					  name      = "Welcome"
+					  category  = "Onboarding"
+					  subject   = "Welcome!"
+					  body_text = "Hello"
+					  body_html = "<h1>Hello</h1>"
+					}
+				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_email_template.test", "subject", "Welcome!"),
 					resource.TestCheckResourceAttr("mailtrap_email_template.test", "body_text", "Hello"),

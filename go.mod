@@ -3,6 +3,7 @@ module github.com/mailtrap/terraform-provider-mailtrap
 go 1.26.1
 
 require (
+	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
 	github.com/hashicorp/terraform-plugin-go v0.31.0
