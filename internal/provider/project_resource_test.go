@@ -86,6 +86,16 @@ func newProjectsMockServer() *httptest.Server {
 		writeJSON(w, p)
 	})
 
+	mux.HandleFunc("GET /api/projects", func(w http.ResponseWriter, _ *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+		all := make([]any, 0, len(projects))
+		for _, p := range projects {
+			all = append(all, p)
+		}
+		writeJSON(w, all)
+	})
+
 	mux.HandleFunc("GET /api/projects/{id}", func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		defer mu.Unlock()
