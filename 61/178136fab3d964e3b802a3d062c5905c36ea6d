@@ -1,0 +1,46 @@
+internal/provider/account_data_source_test.go
+  s_766b59c38723d9::t_888474c326922b 10,22-26,33-36,40-44
+internal/provider/contact_list_resource_test.go
+  s_766b59c38723d9::t_888474c326922b 10,22-26,38-42
+internal/provider/email_template_resource_test.go
+  s_766b59c38723d9::t_888474c326922b 10,22-29,46-54
+internal/provider/sandbox_data_source_test.go
+  s_766b59c38723d9::t_888474c326922b 6,18-22,24-27,35-39,41-44
+go.mod
+  s_766b59c38723d9::t_6de30eee7a6007 6
+internal/provider/sandbox_resource_test.go
+  s_766b59c38723d9::t_888474c326922b 10,22-28,45-51
+internal/provider/sending_domain_data_source_test.go
+  s_766b59c38723d9::t_888474c326922b 6,18-21,23-26
+internal/provider/project_data_source_test.go
+  s_766b59c38723d9::t_888474c326922b 7,19-22,24-27,34-39,43-46,48-51
+internal/provider/contact_field_resource_test.go
+  s_766b59c38723d9::t_888474c326922b 10,22-28,42-48
+internal/provider/sending_domain_resource_test.go
+  s_766b59c38723d9::t_dd5ff60115c405 57-62
+  s_766b59c38723d9::t_888474c326922b 11,23-28,44-49
+internal/provider/project_resource_test.go
+  s_766b59c38723d9::t_888474c326922b 10,22-26,39-43
+internal/provider/api_token_resource_test.go
+  s_766b59c38723d9::t_888474c326922b 10,22-31,50-59
+internal/provider/webhook_resource_test.go
+  s_766b59c38723d9::t_888474c326922b 10,22-28,48-55
+go.sum
+  s_766b59c38723d9::t_871e4a450265f7 7-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "61178136fab3d964e3b802a3d062c5905c36ea6d",
+  "prompts": {},
+  "sessions": {
+    "s_766b59c38723d9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f1843e8e-2d10-4a17-9462-232082f9013c",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
