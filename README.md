@@ -39,13 +39,20 @@ go vet ./...     # vet
 go test ./...    # tests
 ```
 
-Acceptance tests are gated behind `TF_ACC` and run against an in-memory mock, so no live credentials are required:
+To exercise the provider locally without publishing, use a [development override](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers) that points `mailtrap/mailtrap` at your `go install` output.
+
+### Integration tests
+
+The `integration/` module wires every resource and data source together and is exercised end-to-end against the real Mailtrap API with the [native test framework](https://developer.hashicorp.com/terraform/language/tests) (`terraform test` / `tofu test`). CI runs the suite with both Terraform and OpenTofu against a dedicated test account — on pushes to `main` and same-repo pull requests (after the fast checks pass), plus nightly and on manual dispatch; see `.github/workflows/integration.yml` and the `integration` job in `.github/workflows/ci.yml`.
+
+To run it locally you need a Mailtrap API token with admin access to a **test** account — the suite creates and destroys real resources:
 
 ```bash
-TF_ACC=1 go test ./...
+MAILTRAP_API_TOKEN=... ./scripts/integration-test.sh terraform
+MAILTRAP_API_TOKEN=... ./scripts/integration-test.sh tofu
 ```
 
-To exercise the provider locally without publishing, use a [development override](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers) that points `mailtrap/mailtrap` at your `go install` output.
+The script builds the provider and injects it via a `dev_overrides` CLI configuration, so no `terraform init` or registry access is needed. Resource names are prefixed with `var.name_prefix` (default `tftest`); set `TF_VAR_name_prefix` to isolate runs. The framework destroys everything it created, even on failure — and before each run the script sweeps any orphaned `tftest*` resources left by an interrupted run (via `scripts/integration-cleanup.sh`, which requires `jq` and can also be run standalone), so runs are idempotent. Because the sweep deletes by name prefix and the test account's plan allows a single project, runs against the same account must not overlap.
 
 ### Documentation
 
