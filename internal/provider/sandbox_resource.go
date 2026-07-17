@@ -226,15 +226,16 @@ func (r *sandboxResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state sandboxModel
+	var plan, state, config sandboxModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	upd := &mailtrap.SandboxUpdateRequest{Name: plan.Name.ValueString()}
-	if !plan.EmailUsername.IsNull() && !plan.EmailUsername.IsUnknown() {
+	if !config.EmailUsername.IsNull() && !plan.EmailUsername.Equal(state.EmailUsername) {
 		upd.EmailUsername = plan.EmailUsername.ValueString()
 	}
 	sandbox, _, err := r.client.Sandboxes.Update(ctx, state.ID.ValueInt64(), upd)
