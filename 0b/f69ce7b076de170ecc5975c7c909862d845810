@@ -1,0 +1,24 @@
+internal/provider/sandbox_resource.go
+  s_a75e4bf4dec037::t_aad0589f973d88 229,232,238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "0bf69ce7b076de170ecc5975c7c909862d845810",
+  "prompts": {},
+  "humans": {
+    "h_c750c91773bbc1": {
+      "author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  },
+  "sessions": {
+    "s_a75e4bf4dec037": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4c84d93a-4799-4b37-8a80-32238522f812",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
