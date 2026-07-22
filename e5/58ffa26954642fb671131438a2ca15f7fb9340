@@ -1,0 +1,19 @@
+README.md
+  s_459b0d231132f8::t_58213a41975f2f 28-38,43-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "e558ffa26954642fb671131438a2ca15f7fb9340",
+  "prompts": {},
+  "sessions": {
+    "s_459b0d231132f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "29c79b59-53ae-47b7-837f-f462d2603746",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
