@@ -25,11 +25,42 @@ terraform {
 provider "mailtrap" {
   api_token = var.mailtrap_api_token # or set the MAILTRAP_API_TOKEN env var
 }
+
+resource "mailtrap_sending_domain" "example" {
+  domain_name            = "mail.example.com"
+  open_tracking_enabled  = true
+  click_tracking_enabled = true
+}
+
+# The DNS records to publish for domain verification.
+output "dns_records" {
+  value = mailtrap_sending_domain.example.dns_records
+}
 ```
 
 The API token may be supplied via the `api_token` argument or the `MAILTRAP_API_TOKEN` environment variable. Keep it out of version control — prefer the environment variable or a secrets manager.
 
-Per-resource and data-source documentation is published on the Terraform Registry.
+## Resources & data sources
+
+Resources:
+
+- `mailtrap_api_token` — API token with scoped permissions
+- `mailtrap_contact_field` — custom contact field for Mailtrap contacts
+- `mailtrap_contact_list` — contact list
+- `mailtrap_email_template` — reusable email template
+- `mailtrap_project` — project that groups sandboxes
+- `mailtrap_sandbox` — sandbox (testing inbox) inside a project
+- `mailtrap_sending_domain` — sending domain used for email authentication
+- `mailtrap_webhook` — webhook delivering event notifications to a URL
+
+Data sources:
+
+- `mailtrap_account` — account the API token has access to
+- `mailtrap_project` — project by ID or name
+- `mailtrap_sandbox` — sandbox by ID or name
+- `mailtrap_sending_domain` — sending domain, including its DNS records
+
+Per-resource and data-source documentation (all attributes, import syntax) is published on the Terraform Registry; the same content lives in [`docs/`](docs/).
 
 ## Development
 
