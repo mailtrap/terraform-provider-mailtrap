@@ -1,0 +1,23 @@
+.github/workflows/release.yml
+  s_48cee3c08807b9::t_d0cc267fe1a5c7 1-36
+terraform-registry-manifest.json
+  s_48cee3c08807b9::t_d6fe54ea3f4a30 1-6
+.goreleaser.yml
+  s_48cee3c08807b9::t_8b688b38477e65 1-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "775c927d2a0f52e1473dc5b40f1bacb931380287",
+  "prompts": {},
+  "sessions": {
+    "s_48cee3c08807b9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5619043a-0a49-47dd-b3d1-e0a4f2e1ef7f",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
