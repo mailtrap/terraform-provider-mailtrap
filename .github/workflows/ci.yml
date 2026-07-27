@@ -51,6 +51,8 @@ jobs:
       group: integration
       cancel-in-progress: false
     uses: ./.github/workflows/integration.yml
+    with:
+      environment: integration
     secrets: inherit
 
   docs:

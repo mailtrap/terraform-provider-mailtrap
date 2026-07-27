@@ -5,8 +5,20 @@ on:
     # Nightly, to catch Mailtrap API drift even when nothing is committed.
     - cron: "30 2 * * *"
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment holding the Mailtrap test-account credentials"
+        required: true
+        default: integration
+        type: environment
   # Also called from ci.yml on pushes and same-repo PRs.
   workflow_call:
+    inputs:
+      environment:
+        description: "Environment holding the Mailtrap test-account credentials"
+        required: false
+        default: integration
+        type: string
 
 permissions:
   contents: read
@@ -23,6 +35,10 @@ jobs:
   test:
     name: ${{ matrix.tool }}
     runs-on: ubuntu-latest
+    # MAILTRAP_API_TOKEN is an environment secret, not a repo secret: the
+    # shared test account is only reachable through this environment's
+    # protection rules. `inputs` is empty on schedule runs, hence the fallback.
+    environment: ${{ inputs.environment || 'integration' }}
     strategy:
       fail-fast: false
       # The account's plan allows a single project, and integration-test.sh
