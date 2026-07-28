@@ -1,0 +1,37 @@
+.github/workflows/ci.yml
+  s_0c2bc3d45f3641::t_c95b0236a13fe4 54-55
+.github/workflows/integration.yml
+  s_0c2bc3d45f3641::t_c55ed4d97e93f1 19
+  s_00006342fb0a51::t_48c9f0c9e22492 38-41
+  h_c750c91773bbc1 11
+  s_00006342fb0a51::t_56a3b35c50fcd4 8-10,12-13,16-18,20-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "0f2b3f7ef81b3aafe3647908009ec1e1884ce501",
+  "prompts": {},
+  "humans": {
+    "h_c750c91773bbc1": {
+      "author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  },
+  "sessions": {
+    "s_00006342fb0a51": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "921237d1-8467-4d69-bd71-1cc55cac8b83",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    },
+    "s_0c2bc3d45f3641": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "313209a5-ce53-4e35-9da3-aba62c3135ae",
+        "model": "claude-opus-5"
+      },
+      "human_author": null
+    }
+  }
+}
