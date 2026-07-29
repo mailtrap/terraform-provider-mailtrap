@@ -1,0 +1,21 @@
+.goreleaser.yml
+  s_0c2bc3d45f3641::t_2739fe213019c2 53-57,59
+.github/workflows/draft-release.yml
+  s_0c2bc3d45f3641::t_56b8802003f854 1-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "5da2797c68633a0264bff47817c7d84c26ff3355",
+  "prompts": {},
+  "sessions": {
+    "s_0c2bc3d45f3641": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "313209a5-ce53-4e35-9da3-aba62c3135ae",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
