@@ -1,0 +1,19 @@
+.goreleaser.yml
+  s_0c2bc3d45f3641::t_43af908cc96ff7 53-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "9f0f022adf0b43555d07b32a851cf8815a72dddc",
+  "prompts": {},
+  "sessions": {
+    "s_0c2bc3d45f3641": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "313209a5-ce53-4e35-9da3-aba62c3135ae",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
