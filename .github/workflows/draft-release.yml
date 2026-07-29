@@ -1,11 +1,5 @@
 # Drafts a new terraform-provider-mailtrap release: computes the next version from the
 # latest GitHub release and opens a draft release carrying the generated notes.
-#
-# Unlike the other SDKs there is no version file, CHANGELOG or pinned version in the
-# README to bump, so no release PR is opened — the draft release alone carries the
-# version. `publish-sdk-release.yml` in railsware/mailtrap-ga-workflows then reads the
-# draft, builds and GPG-signs the artifacts with GoReleaser, attaches them, and
-# un-drafts the release. Un-drafting creates the git tag the Terraform Registry ingests.
 name: Draft Release
 
 on:
@@ -34,8 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     # Every step works through the GitHub API, so no checkout is needed.
     steps:
-      # There is no latest release before the first one — fall back to 0.0.0 so that
-      # `bump_type: minor` yields the initial v0.1.0.
       - name: Read current version from latest release
         id: read
         env:

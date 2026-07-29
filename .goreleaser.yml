@@ -50,11 +50,11 @@ signs:
       - --detach-sign
       - "${artifact}"
 
-# GoReleaser never creates the release itself: publish-sdk-release.yml in
-# railsware/mailtrap-ga-workflows builds with `--skip=publish`, then attaches the
-# artifacts to the draft release opened by draft-release.yml and un-drafts it. The
-# manifest reaches the release through that upload — `checksum.extra_files` above
-# still records its hash in SHA256SUMS.
+# GoReleaser never creates the release itself. Builds run with `--skip=publish`, and the
+# resulting archives, checksums and signature are attached to the draft release opened by
+# draft-release.yml, which is then un-drafted — that is what creates the git tag the
+# Terraform Registry ingests. The protocol manifest is attached the same way, and
+# `checksum.extra_files` above records its hash in SHA256SUMS.
 release:
   disable: true
 
