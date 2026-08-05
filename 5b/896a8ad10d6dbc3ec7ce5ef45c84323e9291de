@@ -1,0 +1,28 @@
+scripts/integration-test.sh
+  s_fc92f8343be243::t_1cd0ca4b2602f0 60-86
+integration/tests/mailtrap.tftest.hcl
+  s_fc92f8343be243::t_48820b7d49e204 206-210
+scripts/integration-cleanup.sh
+  s_fc92f8343be243::t_27582e7d4c0d5c 38-39
+.github/workflows/ci.yml
+  s_fc92f8343be243::t_a9c3c9276dbff4 53-54
+.github/workflows/integration.yml
+  s_fc92f8343be243::t_168fab6698fe88 14-15
+  s_fc92f8343be243::t_51864a01d88f8e 35-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "5b896a8ad10d6dbc3ec7ce5ef45c84323e9291de",
+  "prompts": {},
+  "sessions": {
+    "s_fc92f8343be243": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a402be64-a4cf-41d7-995f-4cfaf877cf11",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
