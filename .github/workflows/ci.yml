@@ -50,10 +50,9 @@ jobs:
     concurrency:
       group: integration
       cancel-in-progress: false
+    # No secrets are passed down: the called job reads MAILTRAP_API_TOKEN
+    # from its `integration` environment.
     uses: ./.github/workflows/integration.yml
-    with:
-      environment: integration
-    secrets: inherit
 
   docs:
     name: Docs

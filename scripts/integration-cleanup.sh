@@ -35,7 +35,8 @@ if [[ -n "${TF_VAR_name_prefix:-}" && "${TF_VAR_name_prefix}" != tftest* ]]; the
 fi
 
 req() { # method path
-  curl -fsS -X "$1" -H "Api-Token: $MAILTRAP_API_TOKEN" "$api$2"
+  curl -fsS --connect-timeout 10 --max-time 60 \
+    -X "$1" -H "Api-Token: $MAILTRAP_API_TOKEN" "$api$2"
 }
 
 delete_matching() { # label list_path items_jq name_jq prefix delete_path_fmt

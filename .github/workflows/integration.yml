@@ -11,14 +11,9 @@ on:
         required: true
         default: integration
         type: environment
-  # Also called from ci.yml on pushes and same-repo PRs.
+  # Also called from ci.yml on pushes and same-repo PRs; those runs always
+  # use the `integration` environment (the fallback below).
   workflow_call:
-    inputs:
-      environment:
-        description: "Environment holding the Mailtrap test-account credentials"
-        required: false
-        default: integration
-        type: string
 
 permissions:
   contents: read
@@ -37,7 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     # MAILTRAP_API_TOKEN is an environment secret, not a repo secret: the
     # shared test account is only reachable through this environment's
-    # protection rules. `inputs` is empty on schedule runs, hence the fallback.
+    # protection rules. `inputs` is empty on schedule and workflow_call runs,
+    # hence the fallback.
     environment: ${{ inputs.environment || 'integration' }}
     strategy:
       fail-fast: false

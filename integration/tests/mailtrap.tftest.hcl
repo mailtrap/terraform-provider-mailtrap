@@ -203,9 +203,11 @@ run "update" {
   }
 }
 
-# Idempotency signal: planning the update configuration again must not want to
-# replace anything. A replacement would make the planned ids unknown and fail
-# the assertions below.
+# Idempotency signal: planning the update configuration again must be a no-op.
+# The assertions below catch replacements (a replacement makes the planned ids
+# unknown); pending in-place updates are not assertable from inside a run
+# block, so integration-test.sh additionally checks this run's captured JSON
+# plan and fails unless every resource change is a no-op.
 run "plan_after_update" {
   command = plan
 
