@@ -1,0 +1,54 @@
+examples/data-sources/mailtrap_domain/data-source.tf
+  s_cd21394de8f9dd::t_a0549e2e1b0ffb 1-8
+docs/data-sources/domain.md
+  s_cd21394de8f9dd::t_1bf1063417d76d 1-54
+docs/resources/domain.md
+  s_cd21394de8f9dd::t_1bf1063417d76d 1-70
+examples/resources/mailtrap_domain/resource.tf
+  s_cd21394de8f9dd::t_a0549e2e1b0ffb 1-10
+internal/provider/domain_data_source_test.go
+  s_cd21394de8f9dd::t_a0549e2e1b0ffb 1-35
+integration/variables.tf
+  s_cd21394de8f9dd::t_1bf1063417d76d 7
+scripts/integration-cleanup.sh
+  s_cd21394de8f9dd::t_15ec1d6bddb2b7 86-89
+internal/provider/domain_resource.go
+  s_cd21394de8f9dd::t_a0549e2e1b0ffb 1-306
+internal/provider/provider.go
+  s_cd21394de8f9dd::t_a0549e2e1b0ffb 104,114
+integration/main.tf
+  s_cd21394de8f9dd::t_1bf1063417d76d 67,81-82
+integration/tests/mailtrap.tftest.hcl
+  s_cd21394de8f9dd::t_43b0ae7065d336 93
+  s_cd21394de8f9dd::t_1bf1063417d76d 96-97,101-102,106-107,122-123,167,175-176,257-258
+internal/provider/domain_resource_test.go
+  s_cd21394de8f9dd::t_a0549e2e1b0ffb 1-156
+examples/resources/mailtrap_domain/import.sh
+  s_cd21394de8f9dd::t_1bf1063417d76d 1-2
+README.md
+  s_cd21394de8f9dd::t_1bf1063417d76d 29,37,53,61
+docs/resources/webhook.md
+  s_cd21394de8f9dd::t_98ba99e2ebe567 41
+internal/provider/domain_data_source.go
+  s_cd21394de8f9dd::t_a0549e2e1b0ffb 1-115
+integration/outputs.tf
+  s_cd21394de8f9dd::t_6b55fc5c0e2c01 16
+internal/provider/webhook_resource.go
+  s_cd21394de8f9dd::t_7986adf38e91fe 109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "7fcceb6a4d00d9fe62886ebaceea11d0cff694c2",
+  "prompts": {},
+  "sessions": {
+    "s_cd21394de8f9dd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "33132aeb-2216-4902-a984-cd73c2233d0a",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
