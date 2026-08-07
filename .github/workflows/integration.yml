@@ -12,7 +12,9 @@ on:
         default: integration
         type: environment
   # Also called from ci.yml on pushes and same-repo PRs; those runs always
-  # use the `integration` environment (the fallback below).
+  # use the `integration` environment (the fallback below). Callers must set
+  # `secrets: inherit` — in a workflow_call the secrets context only holds
+  # what the caller grants, even for environment secrets.
   workflow_call:
 
 permissions:

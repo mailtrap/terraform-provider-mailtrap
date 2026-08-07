@@ -50,9 +50,13 @@ jobs:
     concurrency:
       group: integration
       cancel-in-progress: false
-    # No secrets are passed down: the called job reads MAILTRAP_API_TOKEN
-    # from its `integration` environment.
+    # The called job's `integration` environment supplies the protection
+    # rules, but in a workflow_call the `secrets` context only contains what
+    # the caller grants — without `inherit` the environment's
+    # MAILTRAP_API_TOKEN resolves to empty. Fork PRs are already excluded by
+    # the `if:` above.
     uses: ./.github/workflows/integration.yml
+    secrets: inherit
 
   docs:
     name: Docs
