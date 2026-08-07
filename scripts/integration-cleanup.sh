@@ -83,9 +83,10 @@ for prefix in "${prefixes[@]}"; do
     ".[] | select(.last_4_digits != \"$auth_last4\")" '.name' "$prefix" \
     "/accounts/$account_id/api_tokens/%s"
 
-  # The test config uses <prefix>.example.com.
-  delete_matching "sending domain" "/accounts/$account_id/sending_domains" \
-    '.data[]' '.domain_name' "$prefix" "/accounts/$account_id/sending_domains/%s"
+  # The test config uses <prefix>.example.com. Domains are token-scoped, so
+  # the endpoint takes no account id (same path the provider's SDK uses).
+  delete_matching "domain" "/domains" \
+    '.data[]' '.domain_name' "$prefix" "/domains/%s"
 done
 
 if [[ "$failed" -ne 0 ]]; then

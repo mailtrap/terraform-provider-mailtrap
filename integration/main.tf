@@ -64,7 +64,7 @@ resource "mailtrap_api_token" "test" {
   }]
 }
 
-resource "mailtrap_sending_domain" "test" {
+resource "mailtrap_domain" "test" {
   # Placeholder domain that is never DNS-verified; the tests only exercise
   # create/read/delete. domain_name forces replacement, so no var.name_suffix.
   domain_name = "${var.name_prefix}.example.com"
@@ -78,6 +78,6 @@ data "mailtrap_sandbox" "test" {
   id = mailtrap_sandbox.test.id
 }
 
-data "mailtrap_sending_domain" "test" {
-  id = mailtrap_sending_domain.test.id
+data "mailtrap_domain" "test" {
+  id = mailtrap_domain.test.id
 }

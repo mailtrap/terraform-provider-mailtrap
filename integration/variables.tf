@@ -4,7 +4,7 @@ variable "name_prefix" {
   description = "Prefix for every resource name so concurrent runs in the shared test account do not collide. CI sets it to tftest-<run_id>-<tool>."
 
   validation {
-    # The prefix is also used as a DNS label in the sending domain name.
+    # The prefix is also used as a DNS label in the domain name.
     condition     = can(regex("^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$", var.name_prefix))
     error_message = "name_prefix must be a valid lowercase DNS label (letters, digits, and dashes)."
   }

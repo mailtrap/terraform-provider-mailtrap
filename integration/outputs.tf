@@ -13,6 +13,6 @@ output "ids" {
     contact_field  = mailtrap_contact_field.test.id
     webhook        = mailtrap_webhook.test.id
     api_token      = mailtrap_api_token.test.id
-    sending_domain = mailtrap_sending_domain.test.id
+    domain         = mailtrap_domain.test.id
   }
 }

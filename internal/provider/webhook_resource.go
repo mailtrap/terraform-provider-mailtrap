@@ -106,7 +106,7 @@ func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"domain_id": schema.Int64Attribute{
 				Optional:            true,
-				MarkdownDescription: "Sending domain the webhook is scoped to. Changing this forces replacement.",
+				MarkdownDescription: "Domain the webhook is scoped to. Changing this forces replacement.",
 				PlanModifiers:       []planmodifier.Int64{int64planmodifier.RequiresReplace()},
 			},
 			"inbound_inbox_id": schema.Int64Attribute{

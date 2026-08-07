@@ -90,21 +90,21 @@ run "create" {
     error_message = "api token last_4_digits was not populated"
   }
 
-  # Sending domain: placeholder domain, never DNS-verified — assertions must
+  # Domain: placeholder domain, never DNS-verified — assertions must
   # not depend on verification status.
   assert {
-    condition     = mailtrap_sending_domain.test.domain_name == "${var.name_prefix}.example.com"
-    error_message = "sending domain name does not match the configuration"
+    condition     = mailtrap_domain.test.domain_name == "${var.name_prefix}.example.com"
+    error_message = "domain name does not match the configuration"
   }
 
   assert {
-    condition     = mailtrap_sending_domain.test.dns_verified == false
-    error_message = "placeholder sending domain unexpectedly reports verified DNS"
+    condition     = mailtrap_domain.test.dns_verified == false
+    error_message = "placeholder domain unexpectedly reports verified DNS"
   }
 
   assert {
-    condition     = length(mailtrap_sending_domain.test.dns_records) > 0
-    error_message = "sending domain DNS records were not populated"
+    condition     = length(mailtrap_domain.test.dns_records) > 0
+    error_message = "domain DNS records were not populated"
   }
 
   # Data sources reading the created resources.
@@ -119,8 +119,8 @@ run "create" {
   }
 
   assert {
-    condition     = data.mailtrap_sending_domain.test.domain_name == mailtrap_sending_domain.test.domain_name
-    error_message = "sending domain data source does not match the created domain"
+    condition     = data.mailtrap_domain.test.domain_name == mailtrap_domain.test.domain_name
+    error_message = "domain data source does not match the created domain"
   }
 }
 
@@ -164,7 +164,7 @@ run "update" {
     error_message = "webhook was replaced instead of updated in place"
   }
 
-  # api_token and sending_domain configs are unchanged by design (no update
+  # api_token and domain configs are unchanged by design (no update
   # endpoint / domain_name forces replacement) — they must survive untouched.
   assert {
     condition     = mailtrap_api_token.test.id == var.expected_ids.api_token
@@ -172,8 +172,8 @@ run "update" {
   }
 
   assert {
-    condition     = mailtrap_sending_domain.test.id == var.expected_ids.sending_domain
-    error_message = "sending domain was unexpectedly replaced"
+    condition     = mailtrap_domain.test.id == var.expected_ids.domain
+    error_message = "domain was unexpectedly replaced"
   }
 
   # The renames actually took effect.
@@ -254,7 +254,7 @@ run "plan_after_update" {
   }
 
   assert {
-    condition     = mailtrap_sending_domain.test.id == var.expected_ids.sending_domain
-    error_message = "follow-up plan wants to replace the sending domain"
+    condition     = mailtrap_domain.test.id == var.expected_ids.domain
+    error_message = "follow-up plan wants to replace the domain"
   }
 }

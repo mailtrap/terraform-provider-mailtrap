@@ -20,21 +20,21 @@ import (
 )
 
 var (
-	_ resource.Resource                = &sendingDomainResource{}
-	_ resource.ResourceWithConfigure   = &sendingDomainResource{}
-	_ resource.ResourceWithImportState = &sendingDomainResource{}
+	_ resource.Resource                = &domainResource{}
+	_ resource.ResourceWithConfigure   = &domainResource{}
+	_ resource.ResourceWithImportState = &domainResource{}
 )
 
-// NewSendingDomainResource is the resource factory registered with the provider.
-func NewSendingDomainResource() resource.Resource {
-	return &sendingDomainResource{}
+// NewDomainResource is the resource factory registered with the provider.
+func NewDomainResource() resource.Resource {
+	return &domainResource{}
 }
 
-type sendingDomainResource struct {
+type domainResource struct {
 	client *mailtrap.Client
 }
 
-type sendingDomainModel struct {
+type domainModel struct {
 	ID                         types.Int64  `tfsdk:"id"`
 	DomainName                 types.String `tfsdk:"domain_name"`
 	OpenTrackingEnabled        types.Bool   `tfsdk:"open_tracking_enabled"`
@@ -64,17 +64,17 @@ var dnsRecordAttrTypes = map[string]attr.Type{
 	"value":  types.StringType,
 }
 
-func (r *sendingDomainResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_sending_domain"
+func (r *domainResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_domain"
 }
 
-func (r *sendingDomainResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *domainResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a Mailtrap sending domain used for email authentication.",
+		MarkdownDescription: "Manages a Mailtrap domain used for email authentication.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				MarkdownDescription: "Numeric identifier of the sending domain.",
+				MarkdownDescription: "Numeric identifier of the domain.",
 				PlanModifiers:       []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
 			},
 			"domain_name": schema.StringAttribute{
@@ -130,7 +130,7 @@ func (r *sendingDomainResource) Schema(_ context.Context, _ resource.SchemaReque
 	}
 }
 
-func (r *sendingDomainResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *domainResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -145,26 +145,26 @@ func (r *sendingDomainResource) Configure(_ context.Context, req resource.Config
 	r.client = client
 }
 
-func (r *sendingDomainResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan sendingDomainModel
+func (r *domainResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan domainModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Build the follow-up payload from the plan before flattenSendingDomain
+	// Build the follow-up payload from the plan before flattenDomain
 	// overwrites the configured values with the create response.
 	upd := trackingUpdate(plan)
 
 	domain, _, err := r.client.SendingDomains.Create(ctx, plan.DomainName.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating sending domain", err.Error())
+		resp.Diagnostics.AddError("Error creating domain", err.Error())
 		return
 	}
 
 	// Persist the created domain right away so a failure in the follow-up
 	// update below doesn't leave it orphaned outside of state.
-	resp.Diagnostics.Append(flattenSendingDomain(ctx, domain, &plan)...)
+	resp.Diagnostics.Append(flattenDomain(ctx, domain, &plan)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -175,16 +175,16 @@ func (r *sendingDomainResource) Create(ctx context.Context, req resource.CreateR
 	if upd != nil {
 		domain, _, err = r.client.SendingDomains.Update(ctx, domain.ID, upd)
 		if err != nil {
-			resp.Diagnostics.AddError("Error setting sending domain tracking options", err.Error())
+			resp.Diagnostics.AddError("Error setting domain tracking options", err.Error())
 			return
 		}
-		resp.Diagnostics.Append(flattenSendingDomain(ctx, domain, &plan)...)
+		resp.Diagnostics.Append(flattenDomain(ctx, domain, &plan)...)
 		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	}
 }
 
-func (r *sendingDomainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state sendingDomainModel
+func (r *domainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state domainModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -196,16 +196,16 @@ func (r *sendingDomainResource) Read(ctx context.Context, req resource.ReadReque
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("Error reading sending domain", err.Error())
+		resp.Diagnostics.AddError("Error reading domain", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(flattenSendingDomain(ctx, domain, &state)...)
+	resp.Diagnostics.Append(flattenDomain(ctx, domain, &state)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *sendingDomainResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan sendingDomainModel
+func (r *domainResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan domainModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -226,30 +226,30 @@ func (r *sendingDomainResource) Update(ctx context.Context, req resource.UpdateR
 		domain, _, err = r.client.SendingDomains.Get(ctx, id)
 	}
 	if err != nil {
-		resp.Diagnostics.AddError("Error updating sending domain", err.Error())
+		resp.Diagnostics.AddError("Error updating domain", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(flattenSendingDomain(ctx, domain, &plan)...)
+	resp.Diagnostics.Append(flattenDomain(ctx, domain, &plan)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *sendingDomainResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state sendingDomainModel
+func (r *domainResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state domainModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	if _, err := r.client.SendingDomains.Delete(ctx, state.ID.ValueInt64()); err != nil && !isNotFound(err) {
-		resp.Diagnostics.AddError("Error deleting sending domain", err.Error())
+		resp.Diagnostics.AddError("Error deleting domain", err.Error())
 	}
 }
 
-func (r *sendingDomainResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *domainResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid import ID", "Expected a numeric sending domain ID.")
+		resp.Diagnostics.AddError("Invalid import ID", "Expected a numeric domain ID.")
 		return
 	}
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
@@ -260,7 +260,7 @@ func (r *sendingDomainResource) ImportState(ctx context.Context, req resource.Im
 // the API call. Unknown values are excluded: on create, unconfigured
 // Optional+Computed attributes are unknown (not null), and sending them would
 // force the server-side defaults to false.
-func trackingUpdate(m sendingDomainModel) *mailtrap.UpdateDomainRequest {
+func trackingUpdate(m domainModel) *mailtrap.UpdateDomainRequest {
 	upd := &mailtrap.UpdateDomainRequest{}
 	if v := m.OpenTrackingEnabled; !v.IsNull() && !v.IsUnknown() {
 		upd.OpenTrackingEnabled = v.ValueBoolPointer()
@@ -277,7 +277,7 @@ func trackingUpdate(m sendingDomainModel) *mailtrap.UpdateDomainRequest {
 	return upd
 }
 
-func flattenSendingDomain(ctx context.Context, d *mailtrap.SendingDomain, m *sendingDomainModel) diag.Diagnostics {
+func flattenDomain(ctx context.Context, d *mailtrap.SendingDomain, m *domainModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 	m.ID = types.Int64Value(d.ID)
 	m.DomainName = types.StringValue(d.DomainName)
