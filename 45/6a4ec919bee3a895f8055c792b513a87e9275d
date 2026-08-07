@@ -1,0 +1,21 @@
+.github/workflows/ci.yml
+  s_b46b1f5280dc4c::t_5431864c704303 53-57,59
+.github/workflows/integration.yml
+  s_b46b1f5280dc4c::t_b154d5ffa14041 15-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "456a4ec919bee3a895f8055c792b513a87e9275d",
+  "prompts": {},
+  "sessions": {
+    "s_b46b1f5280dc4c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "111df991-34f1-4da7-84ae-68305ee2b7f0",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
