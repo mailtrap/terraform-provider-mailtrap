@@ -38,7 +38,7 @@ output "signing_secret" {
 ### Optional
 
 - `active` (Boolean) Whether the webhook is active. Defaults to `true`.
-- `domain_id` (Number) Sending domain the webhook is scoped to. Changing this forces replacement.
+- `domain_id` (Number) Domain the webhook is scoped to. Changing this forces replacement.
 - `event_types` (List of String) Event types the webhook subscribes to (`email_sending` and `campaigns` webhooks).
 - `inbound_inbox_id` (Number) Inbound inbox the webhook is scoped to. Changing this forces replacement.
 - `payload_format` (String) Encoding of delivered payloads.

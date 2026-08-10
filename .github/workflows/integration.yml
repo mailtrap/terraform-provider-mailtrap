@@ -1,0 +1,67 @@
+name: Integration
+
+on:
+  schedule:
+    # Nightly, to catch Mailtrap API drift even when nothing is committed.
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment holding the Mailtrap test-account credentials"
+        required: true
+        default: integration
+        type: environment
+  # Also called from ci.yml on pushes and same-repo PRs; those runs always
+  # use the `integration` environment (the fallback below). Callers must set
+  # `secrets: inherit` — in a workflow_call the secrets context only holds
+  # what the caller grants, even for environment secrets.
+  workflow_call:
+
+permissions:
+  contents: read
+
+# The tests create real resources in a shared Mailtrap test account —
+# never let two workflow runs overlap. This only guards schedule/dispatch
+# runs: for workflow_call, GitHub ignores the called workflow's concurrency,
+# so ci.yml sets the same group on its caller job.
+concurrency:
+  group: integration
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: ${{ matrix.tool }}
+    runs-on: ubuntu-latest
+    # MAILTRAP_API_TOKEN is an environment secret, not a repo secret: the
+    # shared test account is only reachable through this environment's
+    # protection rules. `inputs` is empty on schedule and workflow_call runs,
+    # hence the fallback.
+    environment: ${{ inputs.environment || 'integration' }}
+    strategy:
+      fail-fast: false
+      # The account's plan allows a single project, and integration-test.sh
+      # sweeps all tftest-* leftovers before running — the legs must never
+      # run concurrently.
+      max-parallel: 1
+      matrix:
+        tool: [terraform, tofu]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        if: matrix.tool == 'terraform'
+        with:
+          terraform_wrapper: false
+      - uses: opentofu/setup-opentofu@v1
+        if: matrix.tool == 'tofu'
+        with:
+          tofu_wrapper: false
+      - name: Integration tests
+        run: ./scripts/integration-test.sh ${{ matrix.tool }}
+        env:
+          MAILTRAP_API_TOKEN: ${{ secrets.MAILTRAP_API_TOKEN }}
+          # Unique per run and per matrix leg so the parallel legs (and any
+          # leftovers from failed runs) never collide in the shared account.
+          TF_VAR_name_prefix: tftest-${{ github.run_id }}-${{ matrix.tool }}

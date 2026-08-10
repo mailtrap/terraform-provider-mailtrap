@@ -30,10 +30,33 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
       - name: Vet
         run: go vet ./...
       - name: Test
         run: go test -race ./...
+
+  integration:
+    name: Integration
+    # Real-API tests need the MAILTRAP_API_TOKEN secret, which fork PRs can't
+    # read — they are covered by the mock acceptance tests above. Gated on the
+    # fast tests so broken changes never touch the shared test account.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: [test]
+    # Same group as integration.yml's schedule/dispatch runs — the tests must
+    # never overlap in the shared account (single-project plan, prefix sweep).
+    concurrency:
+      group: integration
+      cancel-in-progress: false
+    # The called job's `integration` environment supplies the protection
+    # rules, but in a workflow_call the `secrets` context only contains what
+    # the caller grants — without `inherit` the environment's
+    # MAILTRAP_API_TOKEN resolves to empty. Fork PRs are already excluded by
+    # the `if:` above.
+    uses: ./.github/workflows/integration.yml
+    secrets: inherit
 
   docs:
     name: Docs

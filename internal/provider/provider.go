@@ -101,7 +101,7 @@ func (p *mailtrapProvider) Resources(_ context.Context) []func() resource.Resour
 		NewEmailTemplateResource,
 		NewProjectResource,
 		NewSandboxResource,
-		NewSendingDomainResource,
+		NewDomainResource,
 		NewWebhookResource,
 	}
 }
@@ -111,6 +111,6 @@ func (p *mailtrapProvider) DataSources(_ context.Context) []func() datasource.Da
 		NewAccountDataSource,
 		NewProjectDataSource,
 		NewSandboxDataSource,
-		NewSendingDomainDataSource,
+		NewDomainDataSource,
 	}
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccSendingDomainResource(t *testing.T) {
+func TestAccDomainResource(t *testing.T) {
 	srv := newDomainsMockServer()
 	t.Cleanup(srv.Close)
 
@@ -21,33 +21,33 @@ func TestAccSendingDomainResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			{ // create + follow-up tracking update
 				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
-					resource "mailtrap_sending_domain" "test" {
+					resource "mailtrap_domain" "test" {
 					  domain_name           = "example.com"
 					  open_tracking_enabled = true
 					}
 				`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "domain_name", "example.com"),
-					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "open_tracking_enabled", "true"),
-					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "click_tracking_enabled", "true"),
-					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "compliance_status", "pending"),
-					resource.TestCheckResourceAttrSet("mailtrap_sending_domain.test", "id"),
-					resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "dns_records.#", "1"),
+					resource.TestCheckResourceAttr("mailtrap_domain.test", "domain_name", "example.com"),
+					resource.TestCheckResourceAttr("mailtrap_domain.test", "open_tracking_enabled", "true"),
+					resource.TestCheckResourceAttr("mailtrap_domain.test", "click_tracking_enabled", "true"),
+					resource.TestCheckResourceAttr("mailtrap_domain.test", "compliance_status", "pending"),
+					resource.TestCheckResourceAttrSet("mailtrap_domain.test", "id"),
+					resource.TestCheckResourceAttr("mailtrap_domain.test", "dns_records.#", "1"),
 				),
 			},
 			{ // import round-trips through Read
-				ResourceName:      "mailtrap_sending_domain.test",
+				ResourceName:      "mailtrap_domain.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
 			{ // update the tracking flag in place
 				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
-					resource "mailtrap_sending_domain" "test" {
+					resource "mailtrap_domain" "test" {
 					  domain_name           = "example.com"
 					  open_tracking_enabled = false
 					}
 				`),
-				Check: resource.TestCheckResourceAttr("mailtrap_sending_domain.test", "open_tracking_enabled", "false"),
+				Check: resource.TestCheckResourceAttr("mailtrap_domain.test", "open_tracking_enabled", "false"),
 			},
 		},
 	})
@@ -63,7 +63,7 @@ func testProviderConfig(baseURL string) string {
 }
 
 // newDomainsMockServer is a minimal in-memory stand-in for the Mailtrap
-// sending-domains API — enough create/get/update/delete to drive the resource
+// domains API — enough create/get/update/delete to drive the resource
 // without real credentials.
 func newDomainsMockServer() *httptest.Server {
 	var (

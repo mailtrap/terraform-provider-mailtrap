@@ -11,30 +11,30 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &sendingDomainDataSource{}
-	_ datasource.DataSourceWithConfigure = &sendingDomainDataSource{}
+	_ datasource.DataSource              = &domainDataSource{}
+	_ datasource.DataSourceWithConfigure = &domainDataSource{}
 )
 
-// NewSendingDomainDataSource is the data source factory registered with the provider.
-func NewSendingDomainDataSource() datasource.DataSource {
-	return &sendingDomainDataSource{}
+// NewDomainDataSource is the data source factory registered with the provider.
+func NewDomainDataSource() datasource.DataSource {
+	return &domainDataSource{}
 }
 
-type sendingDomainDataSource struct {
+type domainDataSource struct {
 	client *mailtrap.Client
 }
 
-func (d *sendingDomainDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_sending_domain"
+func (d *domainDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_domain"
 }
 
-func (d *sendingDomainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *domainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Reads a Mailtrap sending domain, including the DNS records required to authenticate it.",
+		MarkdownDescription: "Reads a Mailtrap domain, including the DNS records required to authenticate it.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.Int64Attribute{
 				Required:            true,
-				MarkdownDescription: "Numeric identifier of the sending domain.",
+				MarkdownDescription: "Numeric identifier of the domain.",
 			},
 			"domain_name": schema.StringAttribute{
 				Computed:            true,
@@ -82,7 +82,7 @@ func (d *sendingDomainDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	}
 }
 
-func (d *sendingDomainDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *domainDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -97,8 +97,8 @@ func (d *sendingDomainDataSource) Configure(_ context.Context, req datasource.Co
 	d.client = client
 }
 
-func (d *sendingDomainDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config sendingDomainModel
+func (d *domainDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var config domainModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -106,10 +106,10 @@ func (d *sendingDomainDataSource) Read(ctx context.Context, req datasource.ReadR
 
 	domain, _, err := d.client.SendingDomains.Get(ctx, config.ID.ValueInt64())
 	if err != nil {
-		resp.Diagnostics.AddError("Error reading sending domain", err.Error())
+		resp.Diagnostics.AddError("Error reading domain", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(flattenSendingDomain(ctx, domain, &config)...)
+	resp.Diagnostics.Append(flattenDomain(ctx, domain, &config)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &config)...)
 }
