@@ -1,0 +1,171 @@
+# Publishes the release drafted by draft-release.yml: builds and GPG-signs the provider
+# with GoReleaser, attaches the artifacts to the pending draft release, and un-drafts it.
+# Un-drafting is what creates the git tag, which the Terraform Registry then ingests.
+#
+# The signing key must be the one registered with the Terraform Registry — the Registry
+# verifies SHA256SUMS.sig against it and rejects the version otherwise.
+#
+# SECRETS (environment `release`):
+#   GPG_PRIVATE_KEY - ASCII-armored GPG private key registered with the Terraform Registry
+#   GPG_PASSPHRASE  - passphrase for that key
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: build and sign, but do not upload or publish"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release terraform-provider-mailtrap
+    runs-on: ubuntu-latest
+    # GPG_PRIVATE_KEY / GPG_PASSPHRASE are environment secrets, not repo secrets:
+    # the signing key is only reachable through this environment's protection rules.
+    environment: release
+    steps:
+      # The provider has no version file: the version lives in the git tag, which GitHub
+      # creates when the pending draft release is un-drafted at the end of this job. Until
+      # then the version is resolved from the draft and handed to GoReleaser via a local,
+      # never-pushed tag.
+      #
+      # The draft is always created against the default branch, so releasing from anywhere
+      # else would tag a tree the release notes were never generated from.
+      - name: Refuse to release from a non-default branch
+        env:
+          REF: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "$REF" != "$DEFAULT_BRANCH" ]; then
+            echo "::error::Releases must be dispatched from $DEFAULT_BRANCH, got $REF"
+            exit 1
+          fi
+
+      - name: Resolve pending draft release
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          drafts=$(gh release list --repo "$GITHUB_REPOSITORY" --json tagName,isDraft \
+            --jq '[.[] | select(.isDraft) | .tagName]')
+          count=$(echo "$drafts" | jq 'length')
+          if [ "$count" -eq 0 ]; then
+            echo "::error::No draft GitHub Release found to publish; run the Draft Release workflow first"
+            exit 1
+          fi
+          # Publishing to the Registry is irreversible, so never guess between drafts.
+          if [ "$count" -gt 1 ]; then
+            echo "::error::Found $count draft releases ($(echo "$drafts" | jq -r 'join(", ")')); leave exactly one"
+            exit 1
+          fi
+          tag=$(echo "$drafts" | jq -r '.[0]')
+          echo "Draft GitHub Release $tag found"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          # GoReleaser resolves the version from git tags and history.
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The draft's target_commitish is a branch name, so un-drafting would tag whatever
+      # the default branch points at *then* — not what was built here. Record the exact
+      # commit and pin the release to it before publishing, so the signed checksums always
+      # describe the tag's tree.
+      - name: Record built commit
+        id: commit
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Create local tag for GoReleaser
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: git tag "$TAG"
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      # Mirrors ci.yml: the acceptance tests need the terraform binary.
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race ./...
+
+      # Third-party actions are pinned to a commit: this one receives the release signing
+      # key, and GoReleaser's archive naming is load-bearing for Registry ingestion.
+      - name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec # v6.3.0
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      # Build, archive, checksum and GPG-sign only — publishing means uploading to the
+      # pending draft release below, not letting GoReleaser create its own release.
+      - name: Build and sign with GoReleaser
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
+        with:
+          distribution: goreleaser
+          version: "2.17.1"
+          args: release --clean --skip=publish,announce
+        env:
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+
+      # GoReleaser attaches the Registry protocol manifest only at publish time, which is
+      # skipped here — copy it into dist under its release asset name instead (same content
+      # its SHA256SUMS entry was computed from). Not guarded by dry_run: GoReleaser records
+      # this file's hash in SHA256SUMS under the asset name below, so a dry run must fail
+      # here if the two ever drift apart.
+      - name: Stage the Registry protocol manifest
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: cp terraform-registry-manifest.json "dist/terraform-provider-mailtrap_${VERSION}_manifest.json"
+
+      - name: Attach artifacts to GitHub Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        # --clobber so a re-run after a partial upload replaces assets instead of failing.
+        run: |
+          gh release upload "$TAG" \
+            dist/*.zip \
+            "dist/terraform-provider-mailtrap_${VERSION}_SHA256SUMS" \
+            "dist/terraform-provider-mailtrap_${VERSION}_SHA256SUMS.sig" \
+            "dist/terraform-provider-mailtrap_${VERSION}_manifest.json" \
+            --clobber \
+            --repo "$GITHUB_REPOSITORY"
+
+      - name: Pin release to the built commit
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          SHA: ${{ steps.commit.outputs.sha }}
+        run: gh release edit "$TAG" --target "$SHA" --repo "$GITHUB_REPOSITORY"
+
+      # Un-drafting creates the git tag; the Terraform Registry then ingests the release.
+      - name: Publish GitHub Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
