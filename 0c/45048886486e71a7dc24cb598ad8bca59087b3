@@ -1,0 +1,33 @@
+.github/workflows/release.yml
+  s_ce7688df353ab0::t_609d28b2daf6ac 8
+  s_ce7688df353ab0::t_dab8c1938fa7c0 59-62,66-71,82-89,99-103,111-112,115
+  s_ce7688df353ab0::t_b0ac757e5b6384 123,126,131-140,147,154,156-163
+  s_ce7688df353ab0::t_da63418ce24d53 1-7,9-40,54-58,63-65,72-79,90,94-97,105-110,113-114,116-122,124-125,127-129,141-146,148-153,155,164-171
+  s_ce7688df353ab0::t_a0cf2965bce27b 81
+  s_ce7688df353ab0::t_dfa1c4dc97a6e7 104
+  s_ce7688df353ab0::t_35d3aabf80d5f0 130
+  s_ce7688df353ab0::t_29bd8cec5d73b6 41-53
+  s_ce7688df353ab0::t_372de675991976 80
+  s_ce7688df353ab0::t_1b699faf5f88ec 91-93,98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "0c45048886486e71a7dc24cb598ad8bca59087b3",
+  "prompts": {},
+  "humans": {
+    "h_c750c91773bbc1": {
+      "author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  },
+  "sessions": {
+    "s_ce7688df353ab0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03032851-ad87-4937-aca1-12e3aa221b0d",
+        "model": "claude-opus-5"
+      },
+      "human_author": null
+    }
+  }
+}
