@@ -53,25 +53,32 @@ jobs:
 
       - name: Resolve pending draft release
         id: version
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          drafts=$(gh release list --repo "$GITHUB_REPOSITORY" --json tagName,isDraft \
-            --jq '[.[] | select(.isDraft) | .tagName]')
-          count=$(echo "$drafts" | jq 'length')
-          if [ "$count" -eq 0 ]; then
-            echo "::error::No draft GitHub Release found to publish; run the Draft Release workflow first"
-            exit 1
-          fi
-          # Publishing to the Registry is irreversible, so never guess between drafts.
-          if [ "$count" -gt 1 ]; then
-            echo "::error::Found $count draft releases ($(echo "$drafts" | jq -r 'join(", ")')); leave exactly one"
-            exit 1
-          fi
-          tag=$(echo "$drafts" | jq -r '.[0]')
-          echo "Draft GitHub Release $tag found"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              ...context.repo,
+              per_page: 100
+            });
+            const drafts = releases.filter((release) => release.draft);
+
+            if (drafts.length === 0) {
+              core.setFailed('No draft GitHub Release found to publish; run the Draft Release workflow first');
+              return;
+            }
+
+            // Publishing to the Registry is irreversible, so never guess between drafts.
+            if (drafts.length > 1) {
+              const tags = drafts.map((draft) => draft.tag_name).join(', ');
+              core.setFailed(`Found ${drafts.length} draft releases (${tags}); leave exactly one`);
+              return;
+            }
+
+            const tag = drafts[0].tag_name;
+
+            core.info(`Draft GitHub Release ${tag} found`);
+            core.setOutput('tag', tag);
+            core.setOutput('version', tag.replace(/^v/, ''));
 
       - uses: actions/checkout@v7
         with:
