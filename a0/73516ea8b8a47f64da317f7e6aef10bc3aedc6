@@ -1,0 +1,19 @@
+.github/workflows/release.yml
+  s_fa33ed33ae777b::t_19c3f0ed469d0d 56-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "a073516ea8b8a47f64da317f7e6aef10bc3aedc6",
+  "prompts": {},
+  "sessions": {
+    "s_fa33ed33ae777b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "69f7a690-db91-4eab-a8c7-3201c59df771",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Maciej Walusiak <maciej.walusiak@railsware.com>"
+    }
+  }
+}
