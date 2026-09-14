@@ -1,0 +1,16 @@
+go.mod
+  h_36a957dc058c42 74,76-81,84
+go.sum
+  h_36a957dc058c42 236-237,241-242,248-249,253-254,267-268,277-278,282-283,293-294
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "df68abd18d7511e720ad0d6771ed6332d01d2ea5",
+  "prompts": {},
+  "humans": {
+    "h_36a957dc058c42": {
+      "author": "Marcin Klocek <marcin.klocek@railsware.com>"
+    }
+  }
+}
