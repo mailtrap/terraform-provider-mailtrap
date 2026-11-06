@@ -3,6 +3,7 @@ package provider
 
 import (
 	"context"
+	"net/http"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -18,7 +19,14 @@ import (
 // envAPIToken is read when the api_token attribute is not set in configuration.
 const envAPIToken = "MAILTRAP_API_TOKEN"
 
-var _ provider.Provider = &mailtrapProvider{}
+// reservedHeaders are set by the client itself; letting `headers` override
+// them could break authentication or request encoding.
+var reservedHeaders = []string{"Authorization", "User-Agent", "Content-Type"}
+
+var (
+	_ provider.Provider                   = &mailtrapProvider{}
+	_ provider.ProviderWithValidateConfig = &mailtrapProvider{}
+)
 
 type mailtrapProvider struct {
 	version string
@@ -34,6 +42,7 @@ func New(version string) func() provider.Provider {
 type mailtrapProviderModel struct {
 	APIToken types.String `tfsdk:"api_token"`
 	BaseURL  types.String `tfsdk:"base_url"`
+	Headers  types.Map    `tfsdk:"headers"`
 }
 
 func (p *mailtrapProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -54,7 +63,38 @@ func (p *mailtrapProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 				Optional:            true,
 				MarkdownDescription: "Override the general-host API base URL. Intended for testing.",
 			},
+			"headers": schema.MapAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+				Sensitive:   true,
+				MarkdownDescription: "Extra HTTP headers sent with every API request, for example credentials for a gateway " +
+					"or proxy in front of the API. `Authorization`, `User-Agent` and `Content-Type` cannot be overridden.",
+			},
 		},
+	}
+}
+
+func (p *mailtrapProvider) ValidateConfig(ctx context.Context, req provider.ValidateConfigRequest, resp *provider.ValidateConfigResponse) {
+	var headers types.Map
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("headers"), &headers)...)
+	if resp.Diagnostics.HasError() || headers.IsNull() || headers.IsUnknown() {
+		return
+	}
+
+	for name := range headers.Elements() {
+		if name == "" {
+			resp.Diagnostics.AddAttributeError(path.Root("headers"), "Invalid header name", "Header names must not be empty.")
+			continue
+		}
+		for _, reserved := range reservedHeaders {
+			if http.CanonicalHeaderKey(name) == reserved {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("headers").AtMapKey(name),
+					"Reserved header",
+					"The "+reserved+" header is set by the provider and cannot be overridden through `headers`.",
+				)
+			}
+		}
 	}
 }
 
@@ -81,6 +121,18 @@ func (p *mailtrapProvider) Configure(ctx context.Context, req provider.Configure
 	var opts []mailtrap.Option
 	if !cfg.BaseURL.IsNull() && cfg.BaseURL.ValueString() != "" {
 		opts = append(opts, mailtrap.WithBaseURL(mailtrap.HostGeneral, cfg.BaseURL.ValueString()))
+	}
+	if !cfg.Headers.IsNull() && !cfg.Headers.IsUnknown() {
+		headers := map[string]string{}
+		resp.Diagnostics.Append(cfg.Headers.ElementsAs(ctx, &headers, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		if len(headers) > 0 {
+			opts = append(opts, mailtrap.WithHTTPClient(&http.Client{
+				Transport: &headersTransport{headers: headers},
+			}))
+		}
 	}
 
 	client, err := mailtrap.NewClient(token, opts...)
