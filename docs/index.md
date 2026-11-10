@@ -43,4 +43,4 @@ provider "mailtrap" {
 
 - `api_token` (String, Sensitive) Mailtrap API token. May also be set via the `MAILTRAP_API_TOKEN` environment variable.
 - `base_url` (String) Override the general-host API base URL. Intended for testing.
-- `headers` (Map of String, Sensitive) Extra HTTP headers sent with every API request, for example credentials for a gateway or proxy in front of the API. `Authorization`, `User-Agent` and `Content-Type` cannot be overridden.
+- `headers` (Map of String, Sensitive) Extra HTTP headers sent with every API request, for example credentials for a gateway or proxy in front of the API. Values must be known during plan. `Authorization`, `User-Agent`, `Content-Type`, `Accept` and `Host` cannot be set.

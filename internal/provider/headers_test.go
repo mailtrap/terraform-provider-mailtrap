@@ -79,8 +79,23 @@ func TestAccProviderHeaders(t *testing.T) {
 	})
 }
 
-func TestAccProviderHeaders_reserved(t *testing.T) {
-	for _, name := range []string{"Authorization", "user-agent", "CONTENT-TYPE"} {
+func TestAccProviderHeaders_invalid(t *testing.T) {
+	cases := map[string]struct {
+		headers string
+		err     string
+	}{
+		"Authorization": {`{ "Authorization" = "x" }`, `Reserved header`},
+		"user-agent":    {`{ "user-agent" = "x" }`, `Reserved header`},
+		"CONTENT-TYPE":  {`{ "CONTENT-TYPE" = "x" }`, `Reserved header`},
+		"accept":        {`{ "accept" = "x" }`, `Reserved header`},
+		"Host":          {`{ "Host" = "x" }`, `Reserved header`},
+		"empty name":    {`{ "" = "x" }`, `Invalid header name`},
+		"space in name": {`{ "X Bad" = "x" }`, `Invalid header name`},
+		"case-only duplicate": {
+			`{ "X-A" = "1", "x-a" = "2" }`, `Duplicate header name`,
+		},
+	}
+	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, resource.TestCase{
 				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
@@ -90,13 +105,48 @@ func TestAccProviderHeaders_reserved(t *testing.T) {
 							provider "mailtrap" {
 							  api_token = "test-token"
 							  base_url  = "http://127.0.0.1:1"
-							  headers   = { %q = "x" }
+							  headers   = %s
 							}
 
 							data "mailtrap_account" "test" {
 							}
-						`, name),
-						ExpectError: regexp.MustCompile(`Reserved header`),
+						`, tc.headers),
+						ExpectError: regexp.MustCompile(tc.err),
+					},
+				},
+			})
+		})
+	}
+}
+
+// Data sources call the API during plan, so headers that are only known
+// after apply must be rejected rather than silently left off those calls.
+func TestAccProviderHeaders_unknown(t *testing.T) {
+	cases := map[string]struct{ input, headers string }{
+		"unknown value": {`"x"`, `{ "X-Token" = terraform_data.token.output }`},
+		"unknown map":   {`{ "X-Token" = "x" }`, `terraform_data.token.output`},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: heredoc.Docf(`
+							resource "terraform_data" "token" {
+							  input = %s
+							}
+
+							provider "mailtrap" {
+							  api_token = "test-token"
+							  base_url  = "http://127.0.0.1:1"
+							  headers   = %s
+							}
+
+							data "mailtrap_account" "test" {
+							}
+						`, tc.input, tc.headers),
+						ExpectError: regexp.MustCompile(`must be known during plan`),
 					},
 				},
 			})
