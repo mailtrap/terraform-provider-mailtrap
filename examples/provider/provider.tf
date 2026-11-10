@@ -11,3 +11,12 @@ terraform {
 provider "mailtrap" {
   api_token = var.mailtrap_api_token
 }
+
+# Extra headers are sent with every request, e.g. when the API sits behind
+# a gateway that requires its own credentials.
+# provider "mailtrap" {
+#   api_token = var.mailtrap_api_token
+#   headers = {
+#     "X-Gateway-Token" = var.gateway_token
+#   }
+# }
