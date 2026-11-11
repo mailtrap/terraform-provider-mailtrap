@@ -1,0 +1,23 @@
+docs/resources/project.md
+  s_4384585597dfdb::t_3ce246f4bc21c8 31
+internal/provider/project_resource.go
+  s_4384585597dfdb::t_edf19d1700be89 14,65-70
+internal/provider/project_resource_test.go
+  s_4384585597dfdb::t_0d23f1eb89fcff 12-14,41,47-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "24f0f8e2f186d19fd3f724237bfd1fc5774b4b5d",
+  "prompts": {},
+  "sessions": {
+    "s_4384585597dfdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35a93ec6-4f08-4118-9eb9-00b751861aae",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Igor Dobryn <igor.dobryn@railsware.com>"
+    }
+  }
+}
