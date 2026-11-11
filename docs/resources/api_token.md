@@ -17,6 +17,8 @@ data "mailtrap_account" "example" {}
 
 resource "mailtrap_api_token" "example" {
   name = "ci-token"
+  # An RFC 3339 timestamp, or "never". Unset uses the server default.
+  expires_at = "never"
 
   resources = [{
     resource_type = "account"
@@ -42,12 +44,12 @@ output "token" {
 
 ### Optional
 
+- `expires_at` (String) When the token expires: an RFC 3339 timestamp (e.g. `2027-06-01T00:00:00Z`), or `never` for a token that does not expire. Leave unset for the server default, which may be a limited lifetime. Changing this forces replacement.
 - `resources` (Attributes List) Permissions granted to the token. Changing this forces replacement. Drift in permissions made outside Terraform is not detected. (see [below for nested schema](#nestedatt--resources))
 
 ### Read-Only
 
 - `created_by` (String) User or token that created this token.
-- `expires_at` (String) RFC 3339 expiry timestamp, or null if the token does not expire.
 - `id` (Number) Numeric identifier of the API token.
 - `last_4_digits` (String) Last four characters of the token value.
 - `token` (String, Sensitive) Full token value. Returned only on creation; unavailable for imported tokens.

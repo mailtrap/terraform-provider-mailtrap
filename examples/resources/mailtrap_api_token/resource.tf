@@ -2,6 +2,8 @@ data "mailtrap_account" "example" {}
 
 resource "mailtrap_api_token" "example" {
   name = "ci-token"
+  # An RFC 3339 timestamp, or "never". Unset uses the server default.
+  expires_at = "never"
 
   resources = [{
     resource_type = "account"

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -14,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	mailtrap "github.com/mailtrap/mailtrap-go"
@@ -116,9 +119,21 @@ func (r *apiTokenResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"expires_at": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "RFC 3339 expiry timestamp, or null if the token does not expire.",
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "When the token expires: an RFC 3339 timestamp (e.g. `2027-06-01T00:00:00Z`), or `" + tokenNeverExpires + "` for a token that " +
+					"does not expire. Leave unset for the server default, which may be a limited lifetime. Changing this forces replacement.",
+				Validators: []validator.String{
+					stringvalidator.Any(
+						stringvalidator.OneOf(tokenNeverExpires),
+						rfc3339Validator{},
+					),
+				},
+				// Unset keeps the prior value; only a configured change replaces.
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplaceIfConfigured(),
+				},
 			},
 		},
 	}
@@ -159,6 +174,14 @@ func (r *apiTokenResource) Create(ctx context.Context, req resource.CreateReques
 				ResourceID:   p.ResourceID.ValueInt64(),
 				AccessLevel:  int(p.AccessLevel.ValueInt64()),
 			})
+		}
+	}
+
+	if !plan.ExpiresAt.IsNull() && !plan.ExpiresAt.IsUnknown() {
+		if v := plan.ExpiresAt.ValueString(); v == tokenNeverExpires {
+			createReq.ExpiresAt = mailtrap.NeverExpires()
+		} else {
+			createReq.ExpiresAt = mailtrap.ExpiresAt(v)
 		}
 	}
 
@@ -229,7 +252,7 @@ func flattenAPIToken(ctx context.Context, t *mailtrap.APIToken, m *apiTokenModel
 	m.Name = types.StringValue(t.Name)
 	m.Last4Digits = types.StringValue(t.Last4Digits)
 	m.CreatedBy = types.StringValue(t.CreatedBy)
-	m.ExpiresAt = emptyAsNull(t.ExpiresAt)
+	m.ExpiresAt = flattenTokenExpiry(m.ExpiresAt, t.ExpiresAt)
 
 	// The full token value is only returned on creation; on every other call
 	// keep the value already in state (null for imported tokens).
@@ -256,4 +279,51 @@ func flattenAPIToken(ctx context.Context, t *mailtrap.APIToken, m *apiTokenModel
 		m.Resources = list
 	}
 	return diags
+}
+
+// tokenNeverExpires is the expires_at value for a token without an expiry; the
+// API reports one as a null expires_at.
+const tokenNeverExpires = "never"
+
+// flattenTokenExpiry maps the API's expiry (empty for none) onto expires_at,
+// keeping the prior value when it names the same instant, so a timestamp the
+// API reformats (e.g. adding fractional seconds) does not force replacement.
+func flattenTokenExpiry(prior types.String, api string) types.String {
+	value := api
+	if value == "" {
+		value = tokenNeverExpires
+	}
+	if !prior.IsNull() && !prior.IsUnknown() && sameTokenExpiry(prior.ValueString(), value) {
+		return prior
+	}
+	return types.StringValue(value)
+}
+
+func sameTokenExpiry(a, b string) bool {
+	if a == b {
+		return true
+	}
+	ta, errA := time.Parse(time.RFC3339, a)
+	tb, errB := time.Parse(time.RFC3339, b)
+	return errA == nil && errB == nil && ta.Equal(tb)
+}
+
+// rfc3339Validator accepts an RFC 3339 timestamp.
+type rfc3339Validator struct{}
+
+func (rfc3339Validator) Description(context.Context) string {
+	return "value must be an RFC 3339 timestamp"
+}
+
+func (v rfc3339Validator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v rfc3339Validator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	if _, err := time.Parse(time.RFC3339, req.ConfigValue.ValueString()); err != nil {
+		resp.Diagnostics.AddAttributeError(req.Path, "Invalid expires_at", v.Description(ctx)+": "+err.Error())
+	}
 }
