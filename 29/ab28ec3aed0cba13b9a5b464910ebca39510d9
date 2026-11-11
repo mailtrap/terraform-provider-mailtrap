@@ -1,0 +1,21 @@
+go.mod
+  s_4384585597dfdb::t_2ad9df1694c87a 11
+go.sum
+  s_4384585597dfdb::t_6784f2ded3a011 149-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "29ab28ec3aed0cba13b9a5b464910ebca39510d9",
+  "prompts": {},
+  "sessions": {
+    "s_4384585597dfdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35a93ec6-4f08-4118-9eb9-00b751861aae",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Igor Dobryn <igor.dobryn@railsware.com>"
+    }
+  }
+}
