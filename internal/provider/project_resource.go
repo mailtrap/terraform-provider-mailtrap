@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -61,8 +62,12 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				MarkdownDescription: "Name of the project.",
 			},
 			"share_links": schema.SingleNestedAttribute{
-				Computed:            true,
-				MarkdownDescription: "Public share URLs for the project.",
+				Computed: true,
+				// Anyone with a link can open the project, so keep them out of plan output.
+				Sensitive:           true,
+				MarkdownDescription: "Public share URLs for the project. Anyone with a link can open the project.",
+				// Derived from the project id, so they don't change on rename.
+				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"admin":  schema.StringAttribute{Computed: true},
 					"viewer": schema.StringAttribute{Computed: true},

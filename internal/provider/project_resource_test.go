@@ -9,6 +9,9 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccProjectResource(t *testing.T) {
@@ -35,12 +38,18 @@ func TestAccProjectResource(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-			{ // rename in place
+			{ // rename in place; share links stay known in the plan
 				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
 					resource "mailtrap_project" "test" {
 					  name = "Renamed Project"
 					}
 				`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mailtrap_project.test", plancheck.ResourceActionUpdate),
+						plancheck.ExpectKnownValue("mailtrap_project.test", tfjsonpath.New("share_links"), knownvalue.NotNull()),
+					},
+				},
 				Check: resource.TestCheckResourceAttr("mailtrap_project.test", "name", "Renamed Project"),
 			},
 		},
