@@ -122,9 +122,11 @@ func (r *apiTokenResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"expires_at": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
-				MarkdownDescription: "When the token expires: an RFC 3339 timestamp (e.g. `2027-06-01T00:00:00Z`), or `" + tokenNeverExpires + "` for a token that " +
-					"does not expire. Leave unset for the server default, which may be a limited lifetime. Changing it to a different time forces replacement; " +
-					"writing the same time differently (e.g. with an offset) only updates state.",
+				MarkdownDescription: "When the token expires: an RFC 3339 timestamp in whole seconds (e.g. `2027-06-01T00:00:00Z`), or `" + tokenNeverExpires + "` " +
+					"for a token that does not expire. Leave unset for the server default of 1 year from creation. A timestamp must be in the future and at " +
+					"most 5 years ahead, or the API rejects it. The API sets the expiry only on create, so changing it to a different time forces " +
+					"replacement; writing the same time differently (e.g. with an offset) only updates state. Resetting the token in Mailtrap gives it " +
+					"a new expiry, which the next plan replaces to match a configured value.",
 				Validators: []validator.String{
 					stringvalidator.Any(
 						stringvalidator.OneOf(tokenNeverExpires),
