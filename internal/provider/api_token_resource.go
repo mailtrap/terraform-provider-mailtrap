@@ -122,17 +122,23 @@ func (r *apiTokenResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional: true,
 				Computed: true,
 				MarkdownDescription: "When the token expires: an RFC 3339 timestamp (e.g. `2027-06-01T00:00:00Z`), or `" + tokenNeverExpires + "` for a token that " +
-					"does not expire. Leave unset for the server default, which may be a limited lifetime. Changing this forces replacement.",
+					"does not expire. Leave unset for the server default, which may be a limited lifetime. Changing it to a different time forces replacement; " +
+					"writing the same time differently (e.g. with an offset) only updates state.",
 				Validators: []validator.String{
 					stringvalidator.Any(
 						stringvalidator.OneOf(tokenNeverExpires),
 						rfc3339Validator{},
 					),
 				},
-				// Unset keeps the prior value; only a configured change replaces.
+				// Unset keeps the prior value. Only a configured, different time
+				// replaces; the same instant spelled differently reaches Update.
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
-					stringplanmodifier.RequiresReplaceIfConfigured(),
+					stringplanmodifier.RequiresReplaceIf(
+						requiresReplaceIfExpiryChanges,
+						"Changing expires_at to a different time replaces the token.",
+						"Changing `expires_at` to a different time replaces the token.",
+					),
 				},
 			},
 		},
@@ -216,13 +222,19 @@ func (r *apiTokenResource) Read(ctx context.Context, req resource.ReadRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-// Update is never reached: every configurable attribute requires replacement
-// because the upstream API has no update endpoint.
-func (r *apiTokenResource) Update(_ context.Context, _ resource.UpdateRequest, resp *resource.UpdateResponse) {
-	resp.Diagnostics.AddError(
-		"API tokens cannot be updated",
-		"The Mailtrap API does not support updating API tokens; all changes require replacement. This is a provider bug.",
-	)
+// Update only stores expires_at. The API has no update endpoint, so every
+// other attribute requires replacement, and expires_at reaches Update only when
+// it names the same instant as state in a different spelling.
+func (r *apiTokenResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state apiTokenModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	state.ExpiresAt = plan.ExpiresAt
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *apiTokenResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -285,6 +297,16 @@ func flattenAPIToken(ctx context.Context, t *mailtrap.APIToken, m *apiTokenModel
 // API reports one as a null expires_at.
 const tokenNeverExpires = "never"
 
+// requiresReplaceIfExpiryChanges replaces the token when a configured
+// expires_at names a different instant than state, not when it only spells the
+// same one differently (an imported token holds the API's spelling).
+func requiresReplaceIfExpiryChanges(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+	if req.ConfigValue.IsNull() || req.StateValue.IsNull() || req.PlanValue.IsUnknown() {
+		return
+	}
+	resp.RequiresReplace = !sameTokenExpiry(req.StateValue.ValueString(), req.PlanValue.ValueString())
+}
+
 // flattenTokenExpiry maps the API's expiry (empty for none) onto expires_at,
 // keeping the prior value when it names the same instant, so a timestamp the
 // API reformats (e.g. adding fractional seconds) does not force replacement.
@@ -295,6 +317,12 @@ func flattenTokenExpiry(prior types.String, api string) types.String {
 	}
 	if !prior.IsNull() && !prior.IsUnknown() && sameTokenExpiry(prior.ValueString(), value) {
 		return prior
+	}
+	// With no prior spelling to keep (import, or state from a version that did
+	// not keep one), store the canonical UTC form: the API's
+	// 2027-06-01T00:00:00.000Z becomes 2027-06-01T00:00:00Z, as usually written.
+	if t, err := time.Parse(time.RFC3339, value); err == nil {
+		value = t.UTC().Format(time.RFC3339Nano)
 	}
 	return types.StringValue(value)
 }

@@ -44,7 +44,7 @@ output "token" {
 
 ### Optional
 
-- `expires_at` (String) When the token expires: an RFC 3339 timestamp (e.g. `2027-06-01T00:00:00Z`), or `never` for a token that does not expire. Leave unset for the server default, which may be a limited lifetime. Changing this forces replacement.
+- `expires_at` (String) When the token expires: an RFC 3339 timestamp (e.g. `2027-06-01T00:00:00Z`), or `never` for a token that does not expire. Leave unset for the server default, which may be a limited lifetime. Changing it to a different time forces replacement; writing the same time differently (e.g. with an offset) only updates state.
 - `resources` (Attributes List) Permissions granted to the token. Changing this forces replacement. Drift in permissions made outside Terraform is not detected. (see [below for nested schema](#nestedatt--resources))
 
 ### Read-Only
