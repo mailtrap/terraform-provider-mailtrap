@@ -1,0 +1,21 @@
+integration/main.tf
+  s_4384585597dfdb::t_a4fbf8355d97a9 60-64
+integration/tests/mailtrap.tftest.hcl
+  s_4384585597dfdb::t_d5e25d15d354c2 93-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e269aaba35b59e51f6e50ee82a43f53c107d3041",
+  "prompts": {},
+  "sessions": {
+    "s_4384585597dfdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35a93ec6-4f08-4118-9eb9-00b751861aae",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Igor Dobryn <igor.dobryn@railsware.com>"
+    }
+  }
+}
