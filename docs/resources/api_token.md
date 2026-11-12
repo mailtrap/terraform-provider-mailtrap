@@ -3,12 +3,12 @@
 page_title: "mailtrap_api_token Resource - mailtrap"
 subcategory: ""
 description: |-
-  Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement, except writing expires_at differently as the same time.
+  Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement, except removing expires_at or writing it differently as the same time.
 ---
 
 # mailtrap_api_token (Resource)
 
-Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement, except writing `expires_at` differently as the same time.
+Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement, except removing `expires_at` or writing it differently as the same time.
 
 ## Example Usage
 

@@ -66,7 +66,7 @@ func (r *apiTokenResource) Metadata(_ context.Context, req resource.MetadataRequ
 func (r *apiTokenResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement, " +
-			"except writing `expires_at` differently as the same time.",
+			"except removing `expires_at` or writing it differently as the same time.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.Int64Attribute{
 				Computed:            true,
