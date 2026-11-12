@@ -6,6 +6,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccProjectDataSource(t *testing.T) {
@@ -29,6 +31,10 @@ func TestAccProjectDataSource(t *testing.T) {
 					resource.TestCheckResourceAttrPair("data.mailtrap_project.by_name", "id", "mailtrap_project.test", "id"),
 					resource.TestCheckResourceAttrSet("data.mailtrap_project.by_name", "share_links.admin"),
 				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectSensitiveValue("data.mailtrap_project.by_name", tfjsonpath.New("share_links")),
+					statecheck.ExpectSensitiveValue("mailtrap_project.test", tfjsonpath.New("share_links")),
+				},
 			},
 			{ // setting both filters is rejected
 				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
