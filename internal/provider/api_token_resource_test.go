@@ -12,6 +12,7 @@ import (
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 // mockDefaultTokenExpiry is what the mock API sets when a create request
@@ -115,6 +116,20 @@ func TestAccAPITokenResource_expiresAt(t *testing.T) {
 				},
 				Check: resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "2027-06-01T00:00:00Z"),
 			},
+			{ // a value known only at apply may be any instant, so it replaces
+				Config: config(`expires_at = terraform_data.expiry.output`) + heredoc.Doc(`
+					resource "terraform_data" "expiry" {
+					  input = "2028-01-01T00:00:00Z"
+					}
+				`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("mailtrap_api_token.test", tfjsonpath.New("expires_at")),
+						plancheck.ExpectResourceAction("mailtrap_api_token.test", plancheck.ResourceActionReplace),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "2028-01-01T00:00:00Z"),
+			},
 			{ // removing expires_at keeps the token
 				Config: config(""),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
@@ -122,7 +137,7 @@ func TestAccAPITokenResource_expiresAt(t *testing.T) {
 						plancheck.ExpectResourceAction("mailtrap_api_token.test", plancheck.ResourceActionNoop),
 					},
 				},
-				Check: resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "2027-06-01T00:00:00Z"),
+				Check: resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "2028-01-01T00:00:00Z"),
 			},
 		},
 	})

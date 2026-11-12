@@ -233,6 +233,17 @@ func (r *apiTokenResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
+	// A different instant would need a new token; planning should have
+	// replaced it, so fail rather than record an expiry the token lacks.
+	if !sameTokenExpiry(state.ExpiresAt.ValueString(), plan.ExpiresAt.ValueString()) {
+		resp.Diagnostics.AddError(
+			"API token expiry cannot be updated",
+			fmt.Sprintf("expires_at is set only when a token is created, so changing it from %q to %q requires replacement. This is a provider bug.",
+				state.ExpiresAt.ValueString(), plan.ExpiresAt.ValueString()),
+		)
+		return
+	}
+
 	state.ExpiresAt = plan.ExpiresAt
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -299,9 +310,15 @@ const tokenNeverExpires = "never"
 
 // requiresReplaceIfExpiryChanges replaces the token when a configured
 // expires_at names a different instant than state, not when it only spells the
-// same one differently (an imported token holds the API's spelling).
+// same one differently (an imported token holds the API's spelling). A value
+// unknown until apply may be any instant, so it replaces, as RequiresReplace
+// does: the API sets the expiry only on create.
 func requiresReplaceIfExpiryChanges(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
-	if req.ConfigValue.IsNull() || req.StateValue.IsNull() || req.PlanValue.IsUnknown() {
+	if req.ConfigValue.IsUnknown() {
+		resp.RequiresReplace = true
+		return
+	}
+	if req.ConfigValue.IsNull() || req.StateValue.IsNull() {
 		return
 	}
 	resp.RequiresReplace = !sameTokenExpiry(req.StateValue.ValueString(), req.PlanValue.ValueString())
