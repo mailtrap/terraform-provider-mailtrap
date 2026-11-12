@@ -1,0 +1,21 @@
+docs/resources/api_token.md
+  s_4384585597dfdb::t_91786723c15b0b 47
+internal/provider/api_token_resource.go
+  s_4384585597dfdb::t_5bdf714c1272e4 128-129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7e2b99d647a0f7fa944c2682da5c835b3459e301",
+  "prompts": {},
+  "sessions": {
+    "s_4384585597dfdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35a93ec6-4f08-4118-9eb9-00b751861aae",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Igor Dobryn <igor.dobryn@railsware.com>"
+    }
+  }
+}
