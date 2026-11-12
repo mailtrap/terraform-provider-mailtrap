@@ -80,6 +80,42 @@ func TestAccSandboxResource(t *testing.T) {
 	})
 }
 
+// A sandbox that leaves email_username to the server, the common case, keeps
+// email_username_enabled known on a rename.
+func TestAccSandboxResource_renameWithoutEmailUsername(t *testing.T) {
+	srv := newSandboxesMockServer()
+	t.Cleanup(srv.Close)
+
+	config := func(name string) string {
+		return testProviderConfig(srv.URL) + heredoc.Docf(`
+			resource "mailtrap_sandbox" "test" {
+			  project_id = 1
+			  name       = %q
+			}
+		`, name)
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config("Staging"),
+			},
+			{
+				Config: config("Staging 2"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mailtrap_sandbox.test", plancheck.ResourceActionUpdate),
+						plancheck.ExpectKnownValue("mailtrap_sandbox.test", tfjsonpath.New("email_username"), knownvalue.StringExact("generated")),
+						plancheck.ExpectKnownValue("mailtrap_sandbox.test", tfjsonpath.New("email_username_enabled"), knownvalue.Bool(false)),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("mailtrap_sandbox.test", "name", "Staging 2"),
+			},
+		},
+	})
+}
+
 // newSandboxesMockServer is a minimal in-memory stand-in for the Mailtrap
 // sandboxes API.
 func newSandboxesMockServer() *httptest.Server {

@@ -305,7 +305,7 @@ func flattenPorts(ctx context.Context, ports []int, diags *diag.Diagnostics) typ
 }
 
 // useStateUnlessEmailUsernameChanges keeps email_username_enabled from state,
-// unless the update changes email_username, which can toggle it.
+// unless config sets a new email_username, which can toggle it.
 type useStateUnlessEmailUsernameChanges struct{}
 
 func (useStateUnlessEmailUsernameChanges) Description(context.Context) string {
@@ -320,10 +320,13 @@ func (useStateUnlessEmailUsernameChanges) PlanModifyBool(ctx context.Context, re
 	if req.StateValue.IsNull() || !req.PlanValue.IsUnknown() {
 		return
 	}
-	var planned, prior types.String
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("email_username"), &planned)...)
+	// Compare config, not the plan: modifiers all see the plan from before any
+	// of them ran, where an unconfigured email_username is still unknown. Update
+	// sends email_username only when config sets it, so a null one changes nothing.
+	var configured, prior types.String
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("email_username"), &configured)...)
 	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("email_username"), &prior)...)
-	if resp.Diagnostics.HasError() || !planned.Equal(prior) {
+	if resp.Diagnostics.HasError() || (!configured.IsNull() && !configured.Equal(prior)) {
 		return
 	}
 	resp.PlanValue = req.StateValue
