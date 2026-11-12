@@ -108,6 +108,11 @@ func TestAccAPITokenResource_expiresAt(t *testing.T) {
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`RFC 3339`),
 			},
+			{ // the API drops fractions, so the value would never read back
+				Config:      config(`expires_at = "2027-06-01T00:00:00.5Z"`),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`whole seconds`),
+			},
 			{
 				Config: config(`expires_at = "never"`),
 				Check:  resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "never"),

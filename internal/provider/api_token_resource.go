@@ -353,11 +353,13 @@ func sameTokenExpiry(a, b string) bool {
 	return errA == nil && errB == nil && ta.Equal(tb)
 }
 
-// rfc3339Validator accepts an RFC 3339 timestamp.
+// rfc3339Validator accepts an RFC 3339 timestamp in whole seconds. The API
+// returns expiries without fractions, so a fractional one would read back as a
+// different instant and plan a replacement on every run.
 type rfc3339Validator struct{}
 
 func (rfc3339Validator) Description(context.Context) string {
-	return "value must be an RFC 3339 timestamp"
+	return "value must be an RFC 3339 timestamp in whole seconds"
 }
 
 func (v rfc3339Validator) MarkdownDescription(ctx context.Context) string {
@@ -368,7 +370,12 @@ func (v rfc3339Validator) ValidateString(ctx context.Context, req validator.Stri
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
-	if _, err := time.Parse(time.RFC3339, req.ConfigValue.ValueString()); err != nil {
+	t, err := time.Parse(time.RFC3339, req.ConfigValue.ValueString())
+	if err != nil {
 		resp.Diagnostics.AddAttributeError(req.Path, "Invalid expires_at", v.Description(ctx)+": "+err.Error())
+		return
+	}
+	if t.Nanosecond() != 0 {
+		resp.Diagnostics.AddAttributeError(req.Path, "Invalid expires_at", v.Description(ctx)+": the API keeps whole seconds only")
 	}
 }
