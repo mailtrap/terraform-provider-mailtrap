@@ -90,6 +90,11 @@ run "create" {
     error_message = "api token last_4_digits was not populated"
   }
 
+  assert {
+    condition     = mailtrap_api_token.test.expires_at == "2030-06-01T02:00:00+02:00"
+    error_message = "api token expires_at does not keep the configured value"
+  }
+
   # Domain: placeholder domain, never DNS-verified — assertions must
   # not depend on verification status.
   assert {
