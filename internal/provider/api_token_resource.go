@@ -325,8 +325,9 @@ func requiresReplaceIfExpiryChanges(_ context.Context, req planmodifier.StringRe
 }
 
 // flattenTokenExpiry maps the API's expiry (empty for none) onto expires_at,
-// keeping the prior value when it names the same instant, so a timestamp the
-// API reformats (e.g. adding fractional seconds) does not force replacement.
+// keeping the prior value when it names the same instant, so config written
+// with an offset, or state from an earlier version, is kept as it is rather
+// than rewritten in the API's spelling.
 func flattenTokenExpiry(prior types.String, api string) types.String {
 	value := api
 	if value == "" {
@@ -335,9 +336,9 @@ func flattenTokenExpiry(prior types.String, api string) types.String {
 	if !prior.IsNull() && !prior.IsUnknown() && sameTokenExpiry(prior.ValueString(), value) {
 		return prior
 	}
-	// With no prior spelling to keep (import, or state from a version that did
-	// not keep one), store the canonical UTC form: the API's
-	// 2027-06-01T00:00:00.000Z becomes 2027-06-01T00:00:00Z, as usually written.
+	// With no prior value (import, or create without expires_at), store the
+	// canonical UTC form, as expires_at is usually written. The API already
+	// returns that; this only normalises another spelling, should it change.
 	if t, err := time.Parse(time.RFC3339, value); err == nil {
 		value = t.UTC().Format(time.RFC3339Nano)
 	}
