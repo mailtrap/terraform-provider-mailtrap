@@ -16,8 +16,12 @@ import (
 )
 
 // mockDefaultTokenExpiry is what the mock API sets when a create request
-// carries no expires_at, standing in for the server's default lifetime.
-const mockDefaultTokenExpiry = "2027-11-11T00:00:00.000Z"
+// carries no expires_at, standing in for the server's default of a year from
+// creation: each token gets a later one, so a replacement can't reuse the old.
+func mockDefaultTokenExpiry(id int64) string {
+	base := time.Date(2027, 11, 11, 0, 0, 0, 0, time.UTC)
+	return base.AddDate(0, 0, int(id-1)).Format(time.RFC3339)
+}
 
 func TestAccAPITokenResource(t *testing.T) {
 	srv := newAPITokensMockServer()
@@ -43,8 +47,7 @@ func TestAccAPITokenResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "resources.0.resource_type", "account"),
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "token", "full-token-value-1234"),
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "last_4_digits", "1234"),
-					// the API's default, stored in canonical UTC form
-					resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "2027-11-11T00:00:00Z"),
+					resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", mockDefaultTokenExpiry(1)),
 					resource.TestCheckResourceAttrSet("mailtrap_api_token.test", "id"),
 				),
 			},
@@ -57,6 +60,7 @@ func TestAccAPITokenResource(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"token"},
 			},
 			{ // renaming forces replacement (no update endpoint); a new token is issued
+				// with its own default expiry, not the old token's
 				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
 					resource "mailtrap_api_token" "test" {
 					  name = "ci-token-v2"
@@ -67,9 +71,16 @@ func TestAccAPITokenResource(t *testing.T) {
 					  }]
 					}
 				`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mailtrap_api_token.test", plancheck.ResourceActionReplace),
+						plancheck.ExpectUnknownValue("mailtrap_api_token.test", tfjsonpath.New("expires_at")),
+					},
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "name", "ci-token-v2"),
 					resource.TestCheckResourceAttrSet("mailtrap_api_token.test", "token"),
+					resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", mockDefaultTokenExpiry(2)),
 				),
 			},
 		},
@@ -107,7 +118,7 @@ func TestAccAPITokenResource_expiresAt(t *testing.T) {
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"token"},
 			},
-			{ // a timestamp replaces the token; the API's reformatted value is not a diff
+			{ // a timestamp replaces the token
 				Config: config(`expires_at = "2027-06-01T00:00:00Z"`),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
@@ -143,14 +154,15 @@ func TestAccAPITokenResource_expiresAt(t *testing.T) {
 	})
 }
 
-// An imported token holds the API's spelling of its expiry. Config naming the
-// same instant differently must not replace it; a different instant must.
+// An imported token holds the API's spelling of its expiry (UTC, whole
+// seconds). Config naming the same instant differently must not replace it; a
+// different instant must.
 func TestAccAPITokenResource_expiresAtImported(t *testing.T) {
 	srv := newAPITokensMockServer()
 	t.Cleanup(srv.Close)
 
 	// seed creates the token; imported then adopts it through an import block,
-	// so its state starts from the API's 2027-06-01T00:00:00.000Z, and seed is
+	// so its state starts from the API's spelling, and seed is
 	// forgotten without deleting the token.
 	config := func(expiresAt string) string {
 		return testProviderConfig(srv.URL) + heredoc.Docf(`
@@ -268,13 +280,13 @@ func newAPITokensMockServer() *httptest.Server {
 			t[k] = v
 		}
 		// Like the API: no expires_at means the default lifetime, null means
-		// none, and timestamps come back with fractional seconds.
+		// none, and timestamps come back in UTC in whole seconds, with a Z.
 		switch v, ok := body["expires_at"]; {
 		case !ok:
-			t["expires_at"] = mockDefaultTokenExpiry
+			t["expires_at"] = mockDefaultTokenExpiry(lastID)
 		case v != nil:
 			if at, err := time.Parse(time.RFC3339, v.(string)); err == nil {
-				t["expires_at"] = at.UTC().Format("2006-01-02T15:04:05.000Z")
+				t["expires_at"] = at.UTC().Format(time.RFC3339)
 			}
 		}
 		tokens[lastID] = t
