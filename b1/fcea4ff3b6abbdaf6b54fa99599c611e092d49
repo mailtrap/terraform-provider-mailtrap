@@ -1,0 +1,21 @@
+internal/provider/sandbox_resource.go
+  s_4384585597dfdb::t_d1b9123ec7539e 308,323-327,329
+internal/provider/sandbox_resource_test.go
+  s_4384585597dfdb::t_080fe2ff95898f 83-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b1fcea4ff3b6abbdaf6b54fa99599c611e092d49",
+  "prompts": {},
+  "sessions": {
+    "s_4384585597dfdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35a93ec6-4f08-4118-9eb9-00b751861aae",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Igor Dobryn <igor.dobryn@railsware.com>"
+    }
+  }
+}
