@@ -1,0 +1,19 @@
+internal/provider/api_token_resource_test.go
+  s_4384585597dfdb::t_5c7ff8d6518e29 288
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "43a0a6a997d30333a1b9a9de93cf1ad94fb668e1",
+  "prompts": {},
+  "sessions": {
+    "s_4384585597dfdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35a93ec6-4f08-4118-9eb9-00b751861aae",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Igor Dobryn <igor.dobryn@railsware.com>"
+    }
+  }
+}
