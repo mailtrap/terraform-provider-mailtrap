@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -14,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	mailtrap "github.com/mailtrap/mailtrap-go"
@@ -62,7 +65,8 @@ func (r *apiTokenResource) Metadata(_ context.Context, req resource.MetadataRequ
 
 func (r *apiTokenResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement.",
+		MarkdownDescription: "Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement, " +
+			"except removing `expires_at` or writing it differently as the same time.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.Int64Attribute{
 				Computed:            true,
@@ -116,9 +120,29 @@ func (r *apiTokenResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"expires_at": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "RFC 3339 expiry timestamp, or null if the token does not expire.",
-				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Optional: true,
+				Computed: true,
+				MarkdownDescription: "When the token expires: an RFC 3339 timestamp in whole seconds (e.g. `2027-06-01T00:00:00Z`), or `" + tokenNeverExpires + "` " +
+					"for a token that does not expire. Leave unset for the server default of 1 year from creation. A timestamp must be in the future and at " +
+					"most 5 years ahead, or the API rejects it. The API sets the expiry only on create, so changing it to a different time forces " +
+					"replacement; writing the same time differently (e.g. with an offset) only updates state. Resetting the token in Mailtrap issues " +
+					"a new token outside Terraform and expires this one 12 hours later; if `expires_at` is set, the next plan replaces it.",
+				Validators: []validator.String{
+					stringvalidator.Any(
+						stringvalidator.OneOf(tokenNeverExpires),
+						rfc3339Validator{},
+					),
+				},
+				// Unset keeps the prior value. Only a configured, different time
+				// replaces; the same instant spelled differently reaches Update.
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplaceIf(
+						requiresReplaceIfExpiryChanges,
+						"Changing expires_at to a different time replaces the token.",
+						"Changing `expires_at` to a different time replaces the token.",
+					),
+				},
 			},
 		},
 	}
@@ -162,6 +186,14 @@ func (r *apiTokenResource) Create(ctx context.Context, req resource.CreateReques
 		}
 	}
 
+	if !plan.ExpiresAt.IsNull() && !plan.ExpiresAt.IsUnknown() {
+		if v := plan.ExpiresAt.ValueString(); v == tokenNeverExpires {
+			createReq.ExpiresAt = mailtrap.NeverExpires()
+		} else {
+			createReq.ExpiresAt = mailtrap.ExpiresAt(v)
+		}
+	}
+
 	token, _, err := r.client.APITokens.Create(ctx, createReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating API token", err.Error())
@@ -193,13 +225,30 @@ func (r *apiTokenResource) Read(ctx context.Context, req resource.ReadRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-// Update is never reached: every configurable attribute requires replacement
-// because the upstream API has no update endpoint.
-func (r *apiTokenResource) Update(_ context.Context, _ resource.UpdateRequest, resp *resource.UpdateResponse) {
-	resp.Diagnostics.AddError(
-		"API tokens cannot be updated",
-		"The Mailtrap API does not support updating API tokens; all changes require replacement. This is a provider bug.",
-	)
+// Update only stores expires_at. The API has no update endpoint, so every
+// other attribute requires replacement, and expires_at reaches Update only when
+// it names the same instant as state in a different spelling.
+func (r *apiTokenResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan, state apiTokenModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// A different instant would need a new token; planning should have
+	// replaced it, so fail rather than record an expiry the token lacks.
+	if !sameTokenExpiry(state.ExpiresAt.ValueString(), plan.ExpiresAt.ValueString()) {
+		resp.Diagnostics.AddError(
+			"API token expiry cannot be updated",
+			fmt.Sprintf("expires_at is set only when a token is created, so changing it from %q to %q requires replacement. This is a provider bug.",
+				state.ExpiresAt.ValueString(), plan.ExpiresAt.ValueString()),
+		)
+		return
+	}
+
+	state.ExpiresAt = plan.ExpiresAt
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *apiTokenResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -229,7 +278,7 @@ func flattenAPIToken(ctx context.Context, t *mailtrap.APIToken, m *apiTokenModel
 	m.Name = types.StringValue(t.Name)
 	m.Last4Digits = types.StringValue(t.Last4Digits)
 	m.CreatedBy = types.StringValue(t.CreatedBy)
-	m.ExpiresAt = emptyAsNull(t.ExpiresAt)
+	m.ExpiresAt = flattenTokenExpiry(m.ExpiresAt, t.ExpiresAt)
 
 	// The full token value is only returned on creation; on every other call
 	// keep the value already in state (null for imported tokens).
@@ -256,4 +305,81 @@ func flattenAPIToken(ctx context.Context, t *mailtrap.APIToken, m *apiTokenModel
 		m.Resources = list
 	}
 	return diags
+}
+
+// tokenNeverExpires is the expires_at value for a token without an expiry; the
+// API reports one as a null expires_at.
+const tokenNeverExpires = "never"
+
+// requiresReplaceIfExpiryChanges replaces the token when a configured
+// expires_at names a different instant than state, not when it only spells the
+// same one differently (an imported token holds the API's spelling). A value
+// unknown until apply may be any instant, so it replaces, as RequiresReplace
+// does: the API sets the expiry only on create.
+func requiresReplaceIfExpiryChanges(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+	if req.ConfigValue.IsUnknown() {
+		resp.RequiresReplace = true
+		return
+	}
+	if req.ConfigValue.IsNull() || req.StateValue.IsNull() {
+		return
+	}
+	resp.RequiresReplace = !sameTokenExpiry(req.StateValue.ValueString(), req.PlanValue.ValueString())
+}
+
+// flattenTokenExpiry maps the API's expiry (empty for none) onto expires_at,
+// keeping the prior value when it names the same instant, so config written
+// with an offset, or state from an earlier version, is kept as it is rather
+// than rewritten in the API's spelling.
+func flattenTokenExpiry(prior types.String, api string) types.String {
+	value := api
+	if value == "" {
+		value = tokenNeverExpires
+	}
+	if !prior.IsNull() && !prior.IsUnknown() && sameTokenExpiry(prior.ValueString(), value) {
+		return prior
+	}
+	// With no prior value (import, or create without expires_at), store the
+	// canonical UTC form, as expires_at is usually written. The API already
+	// returns that; this only normalises another spelling, should it change.
+	if t, err := time.Parse(time.RFC3339, value); err == nil {
+		value = t.UTC().Format(time.RFC3339Nano)
+	}
+	return types.StringValue(value)
+}
+
+func sameTokenExpiry(a, b string) bool {
+	if a == b {
+		return true
+	}
+	ta, errA := time.Parse(time.RFC3339, a)
+	tb, errB := time.Parse(time.RFC3339, b)
+	return errA == nil && errB == nil && ta.Equal(tb)
+}
+
+// rfc3339Validator accepts an RFC 3339 timestamp in whole seconds. The API
+// returns expiries without fractions, so a fractional one would read back as a
+// different instant and plan a replacement on every run.
+type rfc3339Validator struct{}
+
+func (rfc3339Validator) Description(context.Context) string {
+	return "value must be an RFC 3339 timestamp in whole seconds"
+}
+
+func (v rfc3339Validator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v rfc3339Validator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	t, err := time.Parse(time.RFC3339, req.ConfigValue.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(req.Path, "Invalid expires_at", v.Description(ctx)+": "+err.Error())
+		return
+	}
+	if t.Nanosecond() != 0 {
+		resp.Diagnostics.AddAttributeError(req.Path, "Invalid expires_at", v.Description(ctx)+": the API keeps whole seconds only")
+	}
 }

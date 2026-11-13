@@ -3,12 +3,12 @@
 page_title: "mailtrap_api_token Resource - mailtrap"
 subcategory: ""
 description: |-
-  Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement.
+  Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement, except removing expires_at or writing it differently as the same time.
 ---
 
 # mailtrap_api_token (Resource)
 
-Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement.
+Manages a Mailtrap API token. The API has no update endpoint, so every configuration change forces replacement, except removing `expires_at` or writing it differently as the same time.
 
 ## Example Usage
 
@@ -17,6 +17,8 @@ data "mailtrap_account" "example" {}
 
 resource "mailtrap_api_token" "example" {
   name = "ci-token"
+  # An RFC 3339 timestamp, or "never". Unset uses the server default.
+  expires_at = "never"
 
   resources = [{
     resource_type = "account"
@@ -42,12 +44,12 @@ output "token" {
 
 ### Optional
 
+- `expires_at` (String) When the token expires: an RFC 3339 timestamp in whole seconds (e.g. `2027-06-01T00:00:00Z`), or `never` for a token that does not expire. Leave unset for the server default of 1 year from creation. A timestamp must be in the future and at most 5 years ahead, or the API rejects it. The API sets the expiry only on create, so changing it to a different time forces replacement; writing the same time differently (e.g. with an offset) only updates state. Resetting the token in Mailtrap issues a new token outside Terraform and expires this one 12 hours later; if `expires_at` is set, the next plan replaces it.
 - `resources` (Attributes List) Permissions granted to the token. Changing this forces replacement. Drift in permissions made outside Terraform is not detected. (see [below for nested schema](#nestedatt--resources))
 
 ### Read-Only
 
 - `created_by` (String) User or token that created this token.
-- `expires_at` (String) RFC 3339 expiry timestamp, or null if the token does not expire.
 - `id` (Number) Numeric identifier of the API token.
 - `last_4_digits` (String) Last four characters of the token value.
 - `token` (String, Sensitive) Full token value. Returned only on creation; unavailable for imported tokens.

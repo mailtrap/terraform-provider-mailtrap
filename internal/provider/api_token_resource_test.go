@@ -4,12 +4,24 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
+
+// mockDefaultTokenExpiry is what the mock API sets when a create request
+// carries no expires_at, standing in for the server's default of a year from
+// creation: each token gets a later one, so a replacement can't reuse the old.
+func mockDefaultTokenExpiry(id int64) string {
+	base := time.Date(2027, 11, 11, 0, 0, 0, 0, time.UTC)
+	return base.AddDate(0, 0, int(id-1)).Format(time.RFC3339)
+}
 
 func TestAccAPITokenResource(t *testing.T) {
 	srv := newAPITokensMockServer()
@@ -35,6 +47,7 @@ func TestAccAPITokenResource(t *testing.T) {
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "resources.0.resource_type", "account"),
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "token", "full-token-value-1234"),
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "last_4_digits", "1234"),
+					resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", mockDefaultTokenExpiry(1)),
 					resource.TestCheckResourceAttrSet("mailtrap_api_token.test", "id"),
 				),
 			},
@@ -47,6 +60,7 @@ func TestAccAPITokenResource(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"token"},
 			},
 			{ // renaming forces replacement (no update endpoint); a new token is issued
+				// with its own default expiry, not the old token's
 				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
 					resource "mailtrap_api_token" "test" {
 					  name = "ci-token-v2"
@@ -57,9 +71,171 @@ func TestAccAPITokenResource(t *testing.T) {
 					  }]
 					}
 				`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mailtrap_api_token.test", plancheck.ResourceActionReplace),
+						plancheck.ExpectUnknownValue("mailtrap_api_token.test", tfjsonpath.New("expires_at")),
+					},
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("mailtrap_api_token.test", "name", "ci-token-v2"),
 					resource.TestCheckResourceAttrSet("mailtrap_api_token.test", "token"),
+					resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", mockDefaultTokenExpiry(2)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAPITokenResource_expiresAt(t *testing.T) {
+	srv := newAPITokensMockServer()
+	t.Cleanup(srv.Close)
+
+	config := func(expiresAt string) string {
+		return testProviderConfig(srv.URL) + heredoc.Docf(`
+			resource "mailtrap_api_token" "test" {
+			  name = "ci-token"
+			  %s
+			}
+		`, expiresAt)
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{ // first, so the post-test destroy runs with a valid config
+				Config:      config(`expires_at = "next year"`),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`RFC 3339`),
+			},
+			{ // the API drops fractions, so the value would never read back
+				Config:      config(`expires_at = "2027-06-01T00:00:00.5Z"`),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`whole seconds`),
+			},
+			{
+				Config: config(`expires_at = "never"`),
+				Check:  resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "never"),
+			},
+			{ // an imported token that never expires reads back as "never"
+				ResourceName:            "mailtrap_api_token.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"token"},
+			},
+			{ // a timestamp replaces the token
+				Config: config(`expires_at = "2027-06-01T00:00:00Z"`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mailtrap_api_token.test", plancheck.ResourceActionReplace),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "2027-06-01T00:00:00Z"),
+			},
+			{ // a value known only at apply may be any instant, so it replaces
+				Config: config(`expires_at = terraform_data.expiry.output`) + heredoc.Doc(`
+					resource "terraform_data" "expiry" {
+					  input = "2028-01-01T00:00:00Z"
+					}
+				`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("mailtrap_api_token.test", tfjsonpath.New("expires_at")),
+						plancheck.ExpectResourceAction("mailtrap_api_token.test", plancheck.ResourceActionReplace),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "2028-01-01T00:00:00Z"),
+			},
+			{ // removing expires_at keeps the token
+				Config: config(""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mailtrap_api_token.test", plancheck.ResourceActionNoop),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("mailtrap_api_token.test", "expires_at", "2028-01-01T00:00:00Z"),
+			},
+		},
+	})
+}
+
+// An imported token holds the API's spelling of its expiry (UTC, whole
+// seconds). Config naming the same instant differently must not replace it; a
+// different instant must.
+func TestAccAPITokenResource_expiresAtImported(t *testing.T) {
+	srv := newAPITokensMockServer()
+	t.Cleanup(srv.Close)
+
+	// seed creates the token; imported then adopts it through an import block,
+	// so its state starts from the API's spelling, and seed is
+	// forgotten without deleting the token.
+	config := func(expiresAt string) string {
+		return testProviderConfig(srv.URL) + heredoc.Docf(`
+			removed {
+			  from = mailtrap_api_token.seed
+			  lifecycle {
+			    destroy = false
+			  }
+			}
+
+			import {
+			  to = mailtrap_api_token.imported
+			  id = "1" # seed's id in the mock
+			}
+
+			resource "mailtrap_api_token" "imported" {
+			  name       = "ci-token"
+			  expires_at = %q
+			}
+		`, expiresAt)
+	}
+	const imported = "mailtrap_api_token.imported"
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_api_token" "seed" {
+					  name       = "ci-token"
+					  expires_at = "2027-06-01T00:00:00Z"
+					}
+				`),
+			},
+			{ // the same instant as the API's spelling: import only
+				Config: config("2027-06-01T00:00:00Z"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(imported, plancheck.ResourceActionNoop),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(imported, "id", "1"),
+					resource.TestCheckResourceAttr(imported, "expires_at", "2027-06-01T00:00:00Z"),
+				),
+			},
+			{ // the same instant with an offset: state only, same token
+				Config: config("2027-06-01T02:00:00+02:00"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(imported, plancheck.ResourceActionUpdate),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(imported, "id", "1"),
+					resource.TestCheckResourceAttr(imported, "expires_at", "2027-06-01T02:00:00+02:00"),
+				),
+			},
+			{ // a different instant replaces the token
+				Config: config("2028-01-01T00:00:00Z"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction(imported, plancheck.ResourceActionDestroyBeforeCreate),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(imported, "id", "2"),
+					resource.TestCheckResourceAttr(imported, "expires_at", "2028-01-01T00:00:00Z"),
 				),
 			},
 		},
@@ -107,6 +283,16 @@ func newAPITokensMockServer() *httptest.Server {
 		}
 		for k, v := range body {
 			t[k] = v
+		}
+		// Like the API: no expires_at means the default lifetime, null means
+		// none, and timestamps come back in UTC in whole seconds, with a Z.
+		switch v, ok := body["expires_at"]; {
+		case !ok:
+			t["expires_at"] = mockDefaultTokenExpiry(lastID)
+		case v != nil:
+			if at, err := time.Parse(time.RFC3339, v.(string)); err == nil {
+				t["expires_at"] = at.UTC().Format(time.RFC3339)
+			}
 		}
 		tokens[lastID] = t
 		writeJSON(w, t)

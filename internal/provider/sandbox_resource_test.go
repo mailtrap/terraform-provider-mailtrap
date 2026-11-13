@@ -9,6 +9,9 @@ import (
 
 	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccSandboxResource(t *testing.T) {
@@ -41,7 +44,7 @@ func TestAccSandboxResource(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-			{ // rename in place
+			{ // rename in place; computed attributes stay known in the plan
 				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
 					resource "mailtrap_sandbox" "test" {
 					  project_id     = 1
@@ -49,6 +52,64 @@ func TestAccSandboxResource(t *testing.T) {
 					  email_username = "staging-mail"
 					}
 				`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mailtrap_sandbox.test", plancheck.ResourceActionUpdate),
+						plancheck.ExpectKnownValue("mailtrap_sandbox.test", tfjsonpath.New("status"), knownvalue.StringExact("active")),
+						plancheck.ExpectKnownValue("mailtrap_sandbox.test", tfjsonpath.New("email_username_enabled"), knownvalue.Bool(true)),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("mailtrap_sandbox.test", "name", "Staging 2"),
+			},
+			{ // a new email_username may toggle email_username_enabled, so it is unknown
+				Config: testProviderConfig(srv.URL) + heredoc.Doc(`
+					resource "mailtrap_sandbox" "test" {
+					  project_id     = 1
+					  name           = "Staging 2"
+					  email_username = "staging-mail-2"
+					}
+				`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("mailtrap_sandbox.test", tfjsonpath.New("email_username_enabled")),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("mailtrap_sandbox.test", "email_username", "staging-mail-2"),
+			},
+		},
+	})
+}
+
+// A sandbox that leaves email_username to the server, the common case, keeps
+// email_username_enabled known on a rename.
+func TestAccSandboxResource_renameWithoutEmailUsername(t *testing.T) {
+	srv := newSandboxesMockServer()
+	t.Cleanup(srv.Close)
+
+	config := func(name string) string {
+		return testProviderConfig(srv.URL) + heredoc.Docf(`
+			resource "mailtrap_sandbox" "test" {
+			  project_id = 1
+			  name       = %q
+			}
+		`, name)
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config("Staging"),
+			},
+			{
+				Config: config("Staging 2"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("mailtrap_sandbox.test", plancheck.ResourceActionUpdate),
+						plancheck.ExpectKnownValue("mailtrap_sandbox.test", tfjsonpath.New("email_username"), knownvalue.StringExact("generated")),
+						plancheck.ExpectKnownValue("mailtrap_sandbox.test", tfjsonpath.New("email_username_enabled"), knownvalue.Bool(false)),
+					},
+				},
 				Check: resource.TestCheckResourceAttr("mailtrap_sandbox.test", "name", "Staging 2"),
 			},
 		},
@@ -142,6 +203,9 @@ func newSandboxesMockServer() *httptest.Server {
 		}
 		for k, v := range body.Sandbox {
 			s[k] = v
+		}
+		if _, ok := body.Sandbox["email_username"]; ok {
+			s["email_username_enabled"] = true
 		}
 		writeJSON(w, s)
 	})

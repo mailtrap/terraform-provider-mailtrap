@@ -34,7 +34,7 @@ data "mailtrap_project" "by_id" {
 
 ### Read-Only
 
-- `share_links` (Attributes) Public share URLs for the project. (see [below for nested schema](#nestedatt--share_links))
+- `share_links` (Attributes, Sensitive) Public share URLs for the project. Anyone with a link can open the project. (see [below for nested schema](#nestedatt--share_links))
 
 <a id="nestedatt--share_links"></a>
 ### Nested Schema for `share_links`

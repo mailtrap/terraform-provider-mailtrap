@@ -86,6 +86,7 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"email_username_enabled": schema.BoolAttribute{
 				Computed:            true,
 				MarkdownDescription: "Whether the sandbox's email address is enabled.",
+				PlanModifiers:       []planmodifier.Bool{useStateUnlessEmailUsernameChanges{}},
 			},
 			"username": schema.StringAttribute{
 				Computed:            true,
@@ -102,6 +103,8 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"status": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "Status of the sandbox.",
+				// Changes only on the server side, never as a result of an update.
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"domain": schema.StringAttribute{
 				Computed:            true,
@@ -299,4 +302,32 @@ func flattenPorts(ctx context.Context, ports []int, diags *diag.Diagnostics) typ
 	list, listDiags := types.ListValueFrom(ctx, types.Int64Type, vals)
 	diags.Append(listDiags...)
 	return list
+}
+
+// useStateUnlessEmailUsernameChanges keeps email_username_enabled from state,
+// unless config sets a new email_username, which can toggle it.
+type useStateUnlessEmailUsernameChanges struct{}
+
+func (useStateUnlessEmailUsernameChanges) Description(context.Context) string {
+	return "Keeps the prior value unless email_username changes."
+}
+
+func (m useStateUnlessEmailUsernameChanges) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (useStateUnlessEmailUsernameChanges) PlanModifyBool(ctx context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
+	if req.StateValue.IsNull() || !req.PlanValue.IsUnknown() {
+		return
+	}
+	// Compare config, not the plan: modifiers all see the plan from before any
+	// of them ran, where an unconfigured email_username is still unknown. Update
+	// sends email_username only when config sets it, so a null one changes nothing.
+	var configured, prior types.String
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("email_username"), &configured)...)
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("email_username"), &prior)...)
+	if resp.Diagnostics.HasError() || (!configured.IsNull() && !configured.Equal(prior)) {
+		return
+	}
+	resp.PlanValue = req.StateValue
 }

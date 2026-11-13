@@ -57,6 +57,11 @@ resource "mailtrap_api_token" "test" {
   # var.name_suffix — the update test run must not force a replacement.
   name = "${var.name_prefix}-token"
 
+  # Written with an offset: the API returns the same instant in UTC, which must
+  # not plan a replacement (the update runs assert the id is unchanged). The API
+  # accepts at most 5 years ahead; move it forward before it passes.
+  expires_at = "2030-06-01T02:00:00+02:00"
+
   resources = [{
     resource_type = "account"
     resource_id   = data.mailtrap_account.current.id

@@ -46,8 +46,10 @@ func (d *projectDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				MarkdownDescription: "Name of the project. Exactly one of `id` and `name` must be set.",
 			},
 			"share_links": schema.SingleNestedAttribute{
-				Computed:            true,
-				MarkdownDescription: "Public share URLs for the project.",
+				Computed: true,
+				// Anyone logged in with the admin link can join as an admin.
+				Sensitive:           true,
+				MarkdownDescription: "Public share URLs for the project. Anyone with a link can open the project.",
 				Attributes: map[string]schema.Attribute{
 					"admin":  schema.StringAttribute{Computed: true},
 					"viewer": schema.StringAttribute{Computed: true},
